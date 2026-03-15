@@ -2,10 +2,46 @@
   "updated_at": "2026-03-15",
   "sectors": [
     {
+      "sector": "Finance",
+      "total_hiring": 0,
+      "total_layoffs": 0,
+      "total_companies": 3
+    },
+    {
+      "sector": "IT Services",
+      "total_hiring": 0,
+      "total_layoffs": 0,
+      "total_companies": 4
+    },
+    {
+      "sector": "Manufacturing",
+      "total_hiring": 0,
+      "total_layoffs": 0,
+      "total_companies": 2
+    },
+    {
+      "sector": "Media/Gaming",
+      "total_hiring": 0,
+      "total_layoffs": 0,
+      "total_companies": 1
+    },
+    {
+      "sector": "Other",
+      "total_hiring": 0,
+      "total_layoffs": 0,
+      "total_companies": 1
+    },
+    {
       "sector": "Technology",
       "total_hiring": 0,
-      "total_layoffs": 1600,
-      "total_companies": 13
+      "total_layoffs": 0,
+      "total_companies": 15
+    },
+    {
+      "sector": "Travel/Mobility",
+      "total_hiring": 0,
+      "total_layoffs": 0,
+      "total_companies": 1
     }
   ]
 }

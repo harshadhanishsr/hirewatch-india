@@ -279,8 +279,9 @@ const INSIGHTS = [
   '🏢 Cognizant campus hiring ramping up across 8 cities',
 ];
 
-// ── COMPANY DATABASE (city-wise with trends) ──────────────────────
-const COMPANIES_DB = [
+// ── COMPANY DATABASE — loaded dynamically from pipeline ──────────────
+// Seed data shown until pipeline data loads
+const COMPANIES_DB_SEED = [
   // Bengaluru
   {name:'Infosys',        city:'Bengaluru',sector:'IT Services',   size:'250K',status:'hiring',hiring:3200,layoffs:0,  trend:[40,55,60,72,85,92,100],founded:1981,hq:'Bengaluru'},
   {name:'Wipro',          city:'Bengaluru',sector:'IT Services',   size:'180K',status:'hiring',hiring:2100,layoffs:0,  trend:[60,65,70,72,78,85,90], founded:1945,hq:'Bengaluru'},
@@ -336,11 +337,54 @@ const COMPANIES_DB = [
 // Build company index
 const CO_BY_CITY = {};
 const CO_BY_NAME = {};
-COMPANIES_DB.forEach(c => {
-  if (!CO_BY_CITY[c.city]) CO_BY_CITY[c.city] = [];
-  CO_BY_CITY[c.city].push(c);
-  CO_BY_NAME[c.name.toLowerCase()] = c;
-});
+
+// Current live DB — starts with seed, gets replaced by pipeline data
+let COMPANIES_DB = [...COMPANIES_DB_SEED];
+
+function rebuildIndex(){
+  Object.keys(CO_BY_CITY).forEach(k=>delete CO_BY_CITY[k]);
+  Object.keys(CO_BY_NAME).forEach(k=>delete CO_BY_NAME[k]);
+  COMPANIES_DB.forEach(c=>{
+    if(!CO_BY_CITY[c.city]) CO_BY_CITY[c.city]=[];
+    CO_BY_CITY[c.city].push(c);
+    CO_BY_NAME[c.name.toLowerCase()]=c;
+  });
+}
+rebuildIndex();
+
+// ── Load live pipeline data (replaces seed with real scraped companies) ──
+fetch('data/companies_all.json')
+  .then(r=>r.json())
+  .then(data=>{
+    if(data.companies && data.companies.length > 0){
+      COMPANIES_DB = data.companies.map(c=>({
+        name:    c.name,
+        city:    c.city,
+        sector:  c.sector || 'Other',
+        size:    c.size   || '—',
+        status:  c.status || 'mixed',
+        hiring:  c.hiring  || 0,
+        layoffs: c.layoffs || 0,
+        trend:   Array.isArray(c.trend) ? c.trend : [50],
+        founded: c.founded || '',
+        hq:      c.city,
+        is_new:  c.is_new  || false,
+        news_headlines: c.news_headlines || [],
+      }));
+      rebuildIndex();
+      // Re-render current view with live data
+      if(curCity) openCity(curCity);
+      else if(typeof curMode!=='undefined'&&curMode!=='search') renderRankings(curMode);
+      // Announce new companies in ticker
+      const newCount = data.new_this_run || 0;
+      if(newCount > 0){
+        INSIGHTS.unshift(`🆕 ${newCount} new ${newCount===1?'company':'companies'} discovered this run`);
+      }
+      document.getElementById('tick-text').textContent =
+        `✅ Live data: ${data.total} companies across ${Object.keys(CO_BY_CITY).length} cities · Updated ${data.updated_at}`;
+    }
+  })
+  .catch(()=>{ /* silently use seed data */ });
 
 let DISTRICTS = [];
 let curMode   = 'hiring';

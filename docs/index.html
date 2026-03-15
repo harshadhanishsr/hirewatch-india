@@ -7,217 +7,196 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-:root {
-  --bg:#020b18; --s1:#060f20; --s2:#0c1a30;
-  --card:rgba(255,255,255,.05); --border:rgba(255,255,255,.08);
-  --b2:rgba(255,255,255,.14);
-  --text:#e8edf5; --muted:#6b7a96; --faint:#94a3b8;
-  --green:#10b981; --red:#f43f5e; --blue:#3b82f6;
-  --purple:#8b5cf6; --amber:#f59e0b; --cyan:#06b6d4;
-  --gold:#fbbf24; --silver:#94a3b8; --bronze:#c2845a;
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#020b18;--s1:#060f20;--s2:#0c1a30;--s3:#111f35;
+  --card:rgba(255,255,255,.05);--border:rgba(255,255,255,.08);--b2:rgba(255,255,255,.14);
+  --text:#e8edf5;--muted:#6b7a96;--faint:#94a3b8;
+  --green:#10b981;--red:#f43f5e;--blue:#3b82f6;
+  --purple:#8b5cf6;--amber:#f59e0b;--cyan:#06b6d4;
+  --gold:#fbbf24;--silver:#94a3b8;--bronze:#c2845a;
 }
-html, body {
-  width:100vw; height:100vh;
-  overflow:hidden;
-  background:var(--bg); color:var(--text);
-  font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
-  font-size:14px;
-}
-body { display:flex; flex-direction:column; }
+html,body{width:100vw;height:100vh;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;font-size:14px;}
+body{display:flex;flex-direction:column;}
 
-/* ── TICKER ── */
-#ticker {
-  height:36px; flex-shrink:0;
-  background:linear-gradient(90deg,rgba(6,182,212,.12),rgba(139,92,246,.12));
-  border-bottom:1px solid var(--border);
-  display:flex; align-items:center; padding:0 18px; gap:14px; overflow:hidden;
-}
-.tick-label {
-  font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
-  color:var(--cyan); white-space:nowrap;
-  border-right:1px solid var(--border); padding-right:14px;
-}
-#tick-text { font-size:12px; color:var(--faint); transition:opacity .4s; }
-#tick-text.fade { opacity:0; }
+/* TICKER */
+#ticker{height:34px;flex-shrink:0;background:linear-gradient(90deg,rgba(6,182,212,.1),rgba(139,92,246,.1));
+  border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 16px;gap:12px;overflow:hidden;}
+.tick-label{font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--cyan);
+  white-space:nowrap;border-right:1px solid var(--border);padding-right:12px;}
+#tick-text{font-size:12px;color:var(--faint);transition:opacity .4s;}
+#tick-text.fade{opacity:0;}
 
-/* ── HEADER ── */
-#header {
-  height:58px; flex-shrink:0;
-  display:flex; align-items:center; gap:14px; padding:0 16px;
-  background:var(--s1); border-bottom:1px solid var(--border);
-}
-.logo { display:flex; align-items:center; gap:10px; white-space:nowrap; }
-.logo-icon {
-  width:36px; height:36px; border-radius:9px; font-size:18px;
-  background:linear-gradient(135deg,#06b6d4,#8b5cf6);
-  display:flex; align-items:center; justify-content:center;
-}
-.logo-name {
-  font-size:16px; font-weight:800;
-  background:linear-gradient(135deg,#06b6d4,#8b5cf6);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-}
-.logo-sub { font-size:10px; color:var(--muted); letter-spacing:.5px; }
+/* HEADER */
+#header{height:56px;flex-shrink:0;display:flex;align-items:center;gap:12px;padding:0 16px;
+  background:var(--s1);border-bottom:1px solid var(--border);}
+.logo{display:flex;align-items:center;gap:10px;white-space:nowrap;}
+.logo-icon{width:34px;height:34px;border-radius:8px;font-size:17px;
+  background:linear-gradient(135deg,#06b6d4,#8b5cf6);display:flex;align-items:center;justify-content:center;}
+.logo-name{font-size:15px;font-weight:800;background:linear-gradient(135deg,#06b6d4,#8b5cf6);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:.5px;}
+#answers{display:flex;gap:8px;flex:1;overflow:hidden;}
+.ans{flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:6px 10px;display:flex;align-items:center;gap:8px;cursor:pointer;
+  transition:all .2s;position:relative;overflow:hidden;}
+.ans:hover{border-color:var(--ac,var(--cyan));background:rgba(255,255,255,.07);}
+.ans::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ac,var(--cyan));}
+.ans-icon{font-size:16px;}
+.ans-q{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
+.ans-city{font-size:13px;font-weight:800;color:var(--ac,var(--text));line-height:1.2;}
+.ans-val{font-size:10px;color:var(--faint);margin-top:1px;}
+.live-wrap{display:flex;align-items:center;gap:7px;white-space:nowrap;
+  background:var(--card);border:1px solid var(--border);border-radius:20px;padding:5px 10px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.dot{animation:blink 1.5s infinite;}
+.live-wrap span{font-size:10px;color:var(--muted);}
+.live-wrap strong{font-size:10px;color:var(--green);}
+#clock{font-size:10px;color:var(--muted);}
 
-#answers { display:flex; gap:10px; flex:1; overflow:hidden; }
-.ans {
-  flex:1; background:var(--card); border:1px solid var(--border);
-  border-radius:9px; padding:7px 12px;
-  display:flex; align-items:center; gap:10px;
-  cursor:pointer; transition:all .2s; position:relative; overflow:hidden;
-}
-.ans:hover { border-color:var(--ac,var(--cyan)); background:rgba(255,255,255,.07); }
-.ans::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--ac,var(--cyan)); }
-.ans-icon { font-size:18px; }
-.ans-q { font-size:10px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
-.ans-city { font-size:14px; font-weight:800; color:var(--ac,var(--text)); line-height:1.2; }
-.ans-val { font-size:11px; color:var(--faint); margin-top:1px; }
+/* MAIN */
+#main{display:flex;flex:1;overflow:hidden;min-height:0;}
+#map{flex:1;min-width:0;background:#040d1a;}
 
-.live-wrap {
-  display:flex; align-items:center; gap:8px; white-space:nowrap;
-  background:var(--card); border:1px solid var(--border);
-  border-radius:20px; padding:5px 12px;
-}
-.dot { width:7px; height:7px; border-radius:50%; background:var(--green); }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
-.dot { animation:blink 1.5s infinite; }
-.live-wrap span { font-size:11px; color:var(--muted); }
-.live-wrap strong { font-size:11px; color:var(--green); }
-#clock { font-size:11px; color:var(--muted); }
+/* PANEL */
+#panel{width:380px;flex-shrink:0;display:flex;flex-direction:column;
+  background:var(--s1);border-left:1px solid var(--border);overflow:hidden;}
 
-/* ── MAIN ── */
-#main { display:flex; flex:1; overflow:hidden; min-height:0; }
-#map { flex:1; min-width:0; background:#040d1a; }
+/* MODE BAR */
+#mode-bar{display:flex;border-bottom:1px solid var(--border);flex-shrink:0;}
+.mbt{flex:1;padding:10px 2px;text-align:center;font-size:10px;font-weight:700;
+  letter-spacing:.3px;cursor:pointer;color:var(--muted);border:none;background:none;
+  border-bottom:2px solid transparent;transition:all .2s;}
+.mbt.on{color:var(--mc,var(--cyan));border-bottom-color:var(--mc,var(--cyan));background:rgba(255,255,255,.03);}
 
-/* ── RIGHT PANEL ── */
-#panel {
-  width:360px; flex-shrink:0;
-  display:flex; flex-direction:column;
-  background:var(--s1); border-left:1px solid var(--border); overflow:hidden;
-}
-#mode-bar { display:flex; border-bottom:1px solid var(--border); flex-shrink:0; }
-.mbt {
-  flex:1; padding:11px 4px; text-align:center;
-  font-size:11px; font-weight:700; letter-spacing:.3px;
-  cursor:pointer; color:var(--muted); border:none; background:none;
-  border-bottom:2px solid transparent; transition:all .2s;
-}
-.mbt.on { color:var(--mc,var(--cyan)); border-bottom-color:var(--mc,var(--cyan)); background:rgba(255,255,255,.03); }
+/* SEARCH BAR */
+#search-wrap{padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0;position:relative;}
+#si{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:7px;
+  padding:8px 36px 8px 12px;color:var(--text);font-size:12px;outline:none;}
+#si:focus{border-color:var(--cyan);}
+#si::placeholder{color:var(--muted);}
+#search-clear{position:absolute;right:20px;top:50%;transform:translateY(-50%);
+  color:var(--muted);cursor:pointer;font-size:14px;display:none;}
+#search-clear:hover{color:var(--text);}
+#search-type{display:flex;gap:6px;margin-top:7px;}
+.st-btn{flex:1;padding:4px 0;font-size:10px;font-weight:600;border-radius:5px;border:1px solid var(--border);
+  background:none;color:var(--muted);cursor:pointer;transition:all .15s;text-align:center;}
+.st-btn.on{background:var(--cyan);color:#020b18;border-color:var(--cyan);}
 
-#ph { padding:12px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
-#ph-title { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin-bottom:3px; }
-#ph-sub { font-size:11px; color:var(--muted); }
-#ph-crumb { font-size:11px; color:var(--muted); margin-top:4px; display:none; }
-.crumb-link { color:var(--cyan); cursor:pointer; }
-.crumb-link:hover { text-decoration:underline; }
+/* PANEL HEADER */
+#ph{padding:10px 14px 8px;border-bottom:1px solid var(--border);flex-shrink:0;}
+#ph-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;}
+#ph-sub{font-size:10px;color:var(--muted);}
+#ph-crumb{font-size:10px;color:var(--muted);margin-top:3px;display:none;}
+.crumb-link{color:var(--cyan);cursor:pointer;}
+.crumb-link:hover{text-decoration:underline;}
 
-#psearch { padding:10px 14px; border-bottom:1px solid var(--border); flex-shrink:0; }
-#si {
-  width:100%; background:var(--s2); border:1px solid var(--border);
-  border-radius:7px; padding:8px 12px; color:var(--text); font-size:12px; outline:none;
-}
-#si:focus { border-color:var(--cyan); }
-#si::placeholder { color:var(--muted); }
-
-#pc { flex:1; overflow-y:auto; }
-#pc::-webkit-scrollbar { width:4px; }
-#pc::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
-
-/* ── RANK LIST ── */
-.rk-item {
-  display:flex; align-items:center; gap:12px; padding:11px 16px;
-  border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s;
-}
-.rk-item:hover, .rk-item.on { background:rgba(255,255,255,.04); }
-.rk-num {
-  width:28px; height:28px; border-radius:50%; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  font-size:11px; font-weight:800;
-}
-.rk-1 { background:rgba(251,191,36,.15); color:var(--gold); border:1px solid rgba(251,191,36,.3); }
-.rk-2 { background:rgba(148,163,184,.12); color:var(--silver); border:1px solid rgba(148,163,184,.25); }
-.rk-3 { background:rgba(194,132,90,.15); color:var(--bronze); border:1px solid rgba(194,132,90,.3); }
-.rk-n { background:var(--card); color:var(--muted); border:1px solid var(--border); }
-.rk-body { flex:1; min-width:0; }
-.rk-name { font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.rk-state { font-size:11px; color:var(--muted); }
-.rk-bar { height:2px; border-radius:1px; margin-top:5px; opacity:.6; }
-.rk-right { text-align:right; flex-shrink:0; }
-.rk-val { font-size:16px; font-weight:800; }
-.rk-sub { font-size:10px; color:var(--muted); }
-
-/* ── COMPANY CARDS ── */
-.city-header { padding:12px 16px; background:var(--s2); border-bottom:1px solid var(--border); }
-.city-h-name { font-size:16px; font-weight:800; margin-bottom:3px; }
-.city-h-state { font-size:11px; color:var(--muted); }
-.city-stats { display:flex; gap:8px; margin-top:8px; }
-.cstat { flex:1; background:var(--card); border:1px solid var(--border); border-radius:7px; padding:7px 10px; text-align:center; }
-.cstat-v { font-size:15px; font-weight:700; }
-.cstat-l { font-size:10px; color:var(--muted); }
-
-.co-item {
-  display:flex; align-items:center; gap:10px; padding:10px 16px;
-  border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s;
-}
-.co-item:hover { background:rgba(255,255,255,.03); }
-.co-avatar {
-  width:34px; height:34px; border-radius:8px; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  font-size:12px; font-weight:800;
-}
-.co-body { flex:1; min-width:0; }
-.co-name { font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.co-meta { font-size:10px; color:var(--muted); }
-.co-right { text-align:right; flex-shrink:0; }
-.co-val { font-size:13px; font-weight:700; }
-.co-trend { font-size:10px; color:var(--muted); }
-.badge { font-size:9px; font-weight:700; padding:2px 7px; border-radius:8px; display:inline-block; margin-top:2px; }
-.badge-h { background:rgba(16,185,129,.15); color:var(--green); border:1px solid rgba(16,185,129,.2); }
-.badge-l { background:rgba(244,63,94,.15); color:var(--red); border:1px solid rgba(244,63,94,.2); }
-.badge-m { background:rgba(245,158,11,.12); color:var(--amber); border:1px solid rgba(245,158,11,.2); }
-
-/* ── SECTOR BAR ── */
-#sbar {
-  height:32px; flex-shrink:0;
-  display:flex; background:var(--s1); border-top:1px solid var(--border); overflow:hidden;
-}
-.sb-seg {
-  display:flex; align-items:center; justify-content:center;
-  font-size:10px; font-weight:700; letter-spacing:.3px; text-transform:uppercase;
-  overflow:hidden; white-space:nowrap; padding:0 8px;
-  transition:flex .5s ease; cursor:default;
-}
-.sb-seg:hover { filter:brightness(1.2); }
-
-/* ── MAP ── */
-.leaflet-container { background:#04091a !important; }
-.leaflet-tooltip {
-  background:var(--s2) !important; border:1px solid var(--b2) !important;
-  color:var(--text) !important; border-radius:9px !important;
-  padding:0 !important; box-shadow:0 8px 32px rgba(0,0,0,.6) !important;
-}
-.leaflet-tooltip-top::before { border-top-color:var(--b2) !important; }
-.leaflet-control-zoom a { background:var(--s2) !important; color:var(--text) !important; border-color:var(--border) !important; }
-
-@keyframes rise { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
-.animate { animation:rise .25s ease; }
+/* CONTENT */
+#pc{flex:1;overflow-y:auto;}
+#pc::-webkit-scrollbar{width:3px;}
+#pc::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
 </style>
 </head>
 <body>
 
+<style>
+/* RANK LIST */
+.rk-item{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
+.rk-item:hover,.rk-item.on{background:rgba(255,255,255,.04);}
+.rk-num{width:26px;height:26px;border-radius:50%;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;}
+.rk-1{background:rgba(251,191,36,.15);color:var(--gold);border:1px solid rgba(251,191,36,.3);}
+.rk-2{background:rgba(148,163,184,.12);color:var(--silver);border:1px solid rgba(148,163,184,.25);}
+.rk-3{background:rgba(194,132,90,.15);color:var(--bronze);border:1px solid rgba(194,132,90,.3);}
+.rk-n{background:var(--card);color:var(--muted);border:1px solid var(--border);}
+.rk-body{flex:1;min-width:0;}
+.rk-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rk-meta{font-size:10px;color:var(--muted);}
+.rk-bar{height:2px;border-radius:1px;margin-top:4px;opacity:.6;}
+.rk-right{text-align:right;flex-shrink:0;}
+.rk-val{font-size:15px;font-weight:800;}
+.rk-sub{font-size:9px;color:var(--muted);}
+
+/* CITY HEADER */
+.city-header{padding:12px 14px;background:var(--s2);border-bottom:1px solid var(--border);}
+.city-h-name{font-size:15px;font-weight:800;margin-bottom:2px;}
+.city-h-sub{font-size:10px;color:var(--muted);}
+.city-stats{display:flex;gap:6px;margin-top:8px;}
+.cstat{flex:1;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:6px 8px;text-align:center;}
+.cstat-v{font-size:14px;font-weight:700;}
+.cstat-l{font-size:9px;color:var(--muted);}
+
+/* COMPANY CARD */
+.co-item{display:flex;align-items:center;gap:10px;padding:10px 14px;
+  border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;}
+.co-item:hover{background:rgba(255,255,255,.04);}
+.co-avatar{width:36px;height:36px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;}
+.co-body{flex:1;min-width:0;}
+.co-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.co-meta{font-size:10px;color:var(--muted);margin-bottom:2px;}
+.co-city-tag{font-size:9px;color:var(--cyan);background:rgba(6,182,212,.1);
+  border:1px solid rgba(6,182,212,.2);border-radius:4px;padding:1px 5px;display:inline-block;}
+.co-right{text-align:right;flex-shrink:0;min-width:60px;}
+.co-val{font-size:13px;font-weight:800;}
+.co-trend{font-size:10px;margin-top:1px;}
+.badge{font-size:9px;font-weight:700;padding:2px 6px;border-radius:6px;display:inline-block;margin-top:2px;}
+.badge-h{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+.badge-l{background:rgba(244,63,94,.15);color:var(--red);border:1px solid rgba(244,63,94,.2);}
+.badge-m{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.2);}
+
+/* TREND SPARKLINE */
+.trend-bar{display:flex;align-items:flex-end;gap:2px;height:20px;margin-top:4px;}
+.trend-bar span{flex:1;border-radius:1px;min-height:2px;}
+
+/* COMPANY DETAIL PANEL */
+.co-detail{padding:14px;}
+.co-detail-header{display:flex;align-items:center;gap:12px;margin-bottom:14px;}
+.co-detail-avatar{width:44px;height:44px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;flex-shrink:0;}
+.co-detail-name{font-size:15px;font-weight:800;}
+.co-detail-meta{font-size:11px;color:var(--muted);}
+.co-stats{display:flex;gap:8px;margin-bottom:14px;}
+.co-stat{flex:1;background:var(--s2);border:1px solid var(--border);border-radius:7px;padding:8px 10px;text-align:center;}
+.co-stat-v{font-size:16px;font-weight:800;}
+.co-stat-l{font-size:9px;color:var(--muted);}
+.section-title{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;
+  letter-spacing:.8px;padding:10px 14px 6px;border-top:1px solid var(--border);}
+
+/* SECTOR BAR */
+#sbar{height:30px;flex-shrink:0;display:flex;background:var(--s1);border-top:1px solid var(--border);overflow:hidden;}
+.sb-seg{display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;
+  letter-spacing:.3px;text-transform:uppercase;overflow:hidden;white-space:nowrap;padding:0 6px;
+  transition:flex .5s ease;cursor:default;}
+.sb-seg:hover{filter:brightness(1.2);}
+
+/* MAP */
+.leaflet-container{background:#04091a !important;}
+.leaflet-tooltip{background:var(--s2) !important;border:1px solid var(--b2) !important;
+  color:var(--text) !important;border-radius:9px !important;padding:0 !important;
+  box-shadow:0 8px 32px rgba(0,0,0,.6) !important;}
+.leaflet-tooltip-top::before{border-top-color:var(--b2) !important;}
+.leaflet-control-zoom a{background:var(--s2) !important;color:var(--text) !important;border-color:var(--border) !important;}
+
+@keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.animate{animation:rise .2s ease;}
+.empty-state{padding:30px 20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.8;}
+</style>
+
+<!-- TICKER -->
 <div id="ticker">
   <div class="tick-label">💡 Live Insight</div>
   <div id="tick-text">Loading India hiring intelligence…</div>
 </div>
 
+<!-- HEADER -->
 <div id="header">
   <div class="logo">
     <div class="logo-icon">🇮🇳</div>
-    <div>
-      <div class="logo-name">HireWatch India</div>
-      <div class="logo-sub">LIVE HIRING &amp; LAYOFF TRACKER</div>
-    </div>
+    <div><div class="logo-name">HireWatch India</div><div class="logo-sub">LIVE HIRING &amp; LAYOFF TRACKER</div></div>
   </div>
   <div id="answers">
     <div class="ans" style="--ac:#10b981" onclick="focusAnswer('hiring')">
@@ -243,353 +222,548 @@ body { display:flex; flex-direction:column; }
   </div>
 </div>
 
+<!-- MAIN -->
 <div id="main">
   <div id="map"></div>
   <div id="panel">
+    <!-- Mode bar -->
     <div id="mode-bar">
       <button class="mbt on" style="--mc:#10b981" onclick="setMode('hiring',this)">🟢 Hiring</button>
       <button class="mbt" style="--mc:#f43f5e" onclick="setMode('layoffs',this)">🔴 Layoffs</button>
-      <button class="mbt" style="--mc:#3b82f6" onclick="setMode('companies',this)">🏢 Companies</button>
+      <button class="mbt" style="--mc:#3b82f6" onclick="setMode('companies',this)">🏢 Cities</button>
       <button class="mbt" style="--mc:#8b5cf6" onclick="setMode('growth',this)">📈 Growth</button>
+      <button class="mbt" style="--mc:#f59e0b" onclick="setMode('search',this)">🔍 Search</button>
     </div>
+    <!-- Search bar -->
+    <div id="search-wrap">
+      <input id="si" type="text" placeholder="🔍  Search city or company…" oninput="doSearch(this.value)"/>
+      <span id="search-clear" onclick="clearSearch()">✕</span>
+      <div id="search-type">
+        <button class="st-btn on" id="st-all"  onclick="setSearchType('all',this)">All</button>
+        <button class="st-btn"    id="st-city" onclick="setSearchType('city',this)">Cities</button>
+        <button class="st-btn"    id="st-co"   onclick="setSearchType('company',this)">Companies</button>
+        <button class="st-btn"    id="st-hire" onclick="setSearchType('hiring',this)">Hiring</button>
+        <button class="st-btn"    id="st-lay"  onclick="setSearchType('layoff',this)">Layoffs</button>
+      </div>
+    </div>
+    <!-- Panel header -->
     <div id="ph">
       <div id="ph-title">Top Cities by Hiring</div>
       <div id="ph-sub">Click any city bubble on the map</div>
       <div id="ph-crumb"></div>
     </div>
-    <div id="psearch">
-      <input id="si" type="text" placeholder="🔍  Search city or company…" oninput="doSearch(this.value)"/>
-    </div>
+    <!-- Content -->
     <div id="pc"></div>
   </div>
 </div>
-
 <div id="sbar"></div>
 
 <script>
-// ── Config ──────────────────────────────────────────────────────
 const MODE = {
-  hiring:    {color:'#10b981', label:'Hiring',    unit:'open roles',  icon:'🟢'},
-  layoffs:   {color:'#f43f5e', label:'Layoffs',   unit:'affected',    icon:'🔴'},
-  companies: {color:'#3b82f6', label:'Companies', unit:'tracked',     icon:'🏢'},
-  growth:    {color:'#8b5cf6', label:'Growth',    unit:'score',       icon:'📈'},
+  hiring:    {color:'#10b981',label:'Hiring',   unit:'open roles',icon:'🟢'},
+  layoffs:   {color:'#f43f5e',label:'Layoffs',  unit:'affected',  icon:'🔴'},
+  companies: {color:'#3b82f6',label:'Companies',unit:'tracked',   icon:'🏢'},
+  growth:    {color:'#8b5cf6',label:'Growth',   unit:'score',     icon:'📈'},
+  search:    {color:'#f59e0b',label:'Search',   unit:'results',   icon:'🔍'},
 };
 
 const INSIGHTS = [
   '🔥 Bengaluru leads India — 2,841 active roles this week',
-  '📈 Hyderabad fastest growing tech hub +38 growth score',
-  '⚠️ Delhi reports most layoffs — 1,600 affected this month',
-  '🏆 IT sector hiring 18% more than last month nationally',
-  '💡 Pune & Chennai healthiest markets — <5% layoff rate',
+  '📈 Hyderabad fastest growing tech hub — +38 growth score',
+  '⚠️ Delhi most layoffs — 1,600 affected this month',
+  '🏆 IT/Tech sector hiring 18% more than last month',
+  '💡 Pune & Chennai healthiest — <5% layoff rate',
   '📍 Mumbai finance sector adding record banking roles',
-  '🔴 TCS, IBM, Amazon India layoffs dominate news signals',
-  '✅ Cognizant, Wipro, Netflix Hyderabad all actively hiring',
+  '🔴 TCS 12,000 layoffs — largest India tech layoff this year',
+  '✅ Netflix Hyderabad hiring 300 — media sector growing',
+  '🏢 Cognizant campus hiring ramping up across 8 cities',
 ];
 
-const COMPANIES = {
-  Bengaluru:[
-    {name:'Infosys',sector:'IT Services',size:'250K emp',status:'hiring',val:3200,trend:'+18%',founded:1981},
-    {name:'Wipro',sector:'IT Services',size:'180K emp',status:'hiring',val:2100,trend:'+9%',founded:1945},
-    {name:'Flipkart',sector:'E-Commerce',size:'30K emp',status:'mixed',val:450,trend:'±',founded:2007},
-    {name:'Swiggy',sector:'Food Tech',size:'10K emp',status:'mixed',val:230,trend:'↓',founded:2014},
-    {name:'Razorpay',sector:'Fintech',size:'5K emp',status:'hiring',val:180,trend:'+14%',founded:2014},
-    {name:'Meesho',sector:'Social Commerce',size:'4K emp',status:'hiring',val:280,trend:'+15%',founded:2015},
-  ],
-  Mumbai:[
-    {name:'TCS',sector:'IT Services',size:'600K emp',status:'layoff',val:12000,trend:'-8%',founded:1968},
-    {name:'HDFC Bank',sector:'Banking',size:'70K emp',status:'hiring',val:1200,trend:'+15%',founded:1994},
-    {name:'Zomato',sector:'Food Tech',size:'12K emp',status:'mixed',val:320,trend:'±',founded:2008},
-    {name:'Nykaa',sector:'E-Commerce',size:'3K emp',status:'hiring',val:320,trend:'+12%',founded:2012},
-  ],
-  Hyderabad:[
-    {name:'Microsoft India',sector:'IT',size:'15K emp',status:'hiring',val:890,trend:'+14%',founded:1990},
-    {name:'Google India',sector:'IT',size:'8K emp',status:'hiring',val:456,trend:'+10%',founded:2004},
-    {name:'Netflix India',sector:'Media',size:'500 emp',status:'hiring',val:300,trend:'+25%',founded:2016},
-    {name:'Amazon India',sector:'E-Commerce',size:'70K emp',status:'layoff',val:800,trend:'-12%',founded:1994},
-  ],
-  Chennai:[
-    {name:'HCL Technologies',sector:'IT Services',size:'220K emp',status:'hiring',val:1800,trend:'+11%',founded:1976},
-    {name:'Zoho Corporation',sector:'IT Products',size:'12K emp',status:'hiring',val:890,trend:'+22%',founded:1996},
-    {name:'Freshworks',sector:'SaaS',size:'5K emp',status:'hiring',val:340,trend:'+18%',founded:2010},
-  ],
-  Delhi:[
-    {name:'Paytm',sector:'Fintech',size:'8K emp',status:'layoff',val:450,trend:'-28%',founded:2010},
-    {name:'IndiGo',sector:'Aviation',size:'30K emp',status:'hiring',val:1200,trend:'+18%',founded:2006},
-    {name:'MakeMyTrip',sector:'Travel',size:'4K emp',status:'mixed',val:230,trend:'±',founded:2000},
-  ],
-  Pune:[
-    {name:'Tech Mahindra',sector:'IT Services',size:'160K emp',status:'hiring',val:1100,trend:'+8%',founded:1986},
-    {name:'Persistent Systems',sector:'IT',size:'22K emp',status:'hiring',val:680,trend:'+16%',founded:1990},
-    {name:'Bajaj Auto',sector:'Manufacturing',size:'20K emp',status:'hiring',val:560,trend:'+5%',founded:1945},
-  ],
-  Kolkata:[
-    {name:'ITC Limited',sector:'FMCG',size:'30K emp',status:'hiring',val:678,trend:'+8%',founded:1910},
-    {name:'Coal India',sector:'Mining',size:'250K emp',status:'mixed',val:450,trend:'±',founded:1975},
-  ],
-  Ahmedabad:[
-    {name:'Adani Group',sector:'Infrastructure',size:'25K emp',status:'hiring',val:1200,trend:'+14%',founded:1988},
-    {name:'Torrent Pharma',sector:'Pharma',size:'8K emp',status:'hiring',val:456,trend:'+9%',founded:1959},
-  ],
-  Jaipur:[
-    {name:'Jaipur Rugs',sector:'Textiles',size:'4K emp',status:'hiring',val:120,trend:'+5%',founded:1978},
-    {name:'Infosys BPO Jaipur',sector:'IT Services',size:'3K emp',status:'mixed',val:80,trend:'±',founded:2004},
-  ],
-  Kochi:[
-    {name:'UST Global',sector:'IT Services',size:'8K emp',status:'hiring',val:345,trend:'+12%',founded:1999},
-  ],
-};
+// ── COMPANY DATABASE (city-wise with trends) ──────────────────────
+const COMPANIES_DB = [
+  // Bengaluru
+  {name:'Infosys',        city:'Bengaluru',sector:'IT Services',   size:'250K',status:'hiring',hiring:3200,layoffs:0,  trend:[40,55,60,72,85,92,100],founded:1981,hq:'Bengaluru'},
+  {name:'Wipro',          city:'Bengaluru',sector:'IT Services',   size:'180K',status:'hiring',hiring:2100,layoffs:0,  trend:[60,65,70,72,78,85,90], founded:1945,hq:'Bengaluru'},
+  {name:'Flipkart',       city:'Bengaluru',sector:'E-Commerce',    size:'30K', status:'mixed', hiring:450, layoffs:120,trend:[90,85,80,75,70,72,75], founded:2007,hq:'Bengaluru'},
+  {name:'Swiggy',         city:'Bengaluru',sector:'Food Tech',     size:'10K', status:'mixed', hiring:230, layoffs:80, trend:[80,75,70,65,60,62,65], founded:2014,hq:'Bengaluru'},
+  {name:'Razorpay',       city:'Bengaluru',sector:'Fintech',       size:'5K',  status:'hiring',hiring:180, layoffs:0,  trend:[30,40,50,60,75,85,95], founded:2014,hq:'Bengaluru'},
+  {name:'Meesho',         city:'Bengaluru',sector:'Social Commerce',size:'4K', status:'hiring',hiring:280, layoffs:0,  trend:[20,35,50,60,70,80,90], founded:2015,hq:'Bengaluru'},
+  {name:'PhonePe',        city:'Bengaluru',sector:'Fintech',       size:'8K',  status:'hiring',hiring:250, layoffs:0,  trend:[30,45,55,65,75,85,95], founded:2015,hq:'Bengaluru'},
+  {name:"Byju's",         city:'Bengaluru',sector:'EdTech',        size:'15K', status:'layoff',hiring:0,   layoffs:560,trend:[100,90,80,60,40,25,15], founded:2011,hq:'Bengaluru'},
+  // Mumbai
+  {name:'TCS',            city:'Mumbai',   sector:'IT Services',   size:'600K',status:'layoff',hiring:500, layoffs:12000,trend:[100,95,90,80,70,60,55],founded:1968,hq:'Mumbai'},
+  {name:'HDFC Bank',      city:'Mumbai',   sector:'Banking',       size:'70K', status:'hiring',hiring:1200,layoffs:0,  trend:[55,60,65,70,80,90,100],founded:1994,hq:'Mumbai'},
+  {name:'Zomato',         city:'Mumbai',   sector:'Food Tech',     size:'12K', status:'mixed', hiring:320, layoffs:180,trend:[70,65,60,65,70,72,75], founded:2008,hq:'Delhi'},
+  {name:'Nykaa',          city:'Mumbai',   sector:'E-Commerce',    size:'3K',  status:'hiring',hiring:320, layoffs:0,  trend:[40,50,60,70,75,85,90], founded:2012,hq:'Mumbai'},
+  {name:'Reliance Jio',   city:'Mumbai',   sector:'Telecom',       size:'100K',status:'hiring',hiring:1800,layoffs:0,  trend:[50,60,65,70,80,90,100],founded:2015,hq:'Mumbai'},
+  // Hyderabad
+  {name:'Microsoft India',city:'Hyderabad',sector:'IT',            size:'15K', status:'hiring',hiring:890, layoffs:0,  trend:[60,65,70,75,80,90,100],founded:1990,hq:'Hyderabad'},
+  {name:'Google India',   city:'Hyderabad',sector:'IT',            size:'8K',  status:'hiring',hiring:456, layoffs:0,  trend:[55,60,65,70,80,85,95], founded:2004,hq:'Hyderabad'},
+  {name:'Netflix India',  city:'Hyderabad',sector:'Media',         size:'500', status:'hiring',hiring:300, layoffs:0,  trend:[20,35,50,65,80,90,100],founded:2016,hq:'Hyderabad'},
+  {name:'Amazon India',   city:'Hyderabad',sector:'E-Commerce',    size:'70K', status:'layoff',hiring:200, layoffs:800,trend:[90,85,80,75,65,60,55], founded:1994,hq:'Hyderabad'},
+  {name:'Cyient',         city:'Hyderabad',sector:'IT Services',   size:'14K', status:'hiring',hiring:340, layoffs:0,  trend:[50,55,60,65,70,80,90], founded:1991,hq:'Hyderabad'},
+  // Chennai
+  {name:'HCL Technologies',city:'Chennai', sector:'IT Services',   size:'220K',status:'hiring',hiring:1800,layoffs:0,  trend:[55,60,65,70,75,85,95], founded:1976,hq:'Chennai'},
+  {name:'Zoho Corporation',city:'Chennai', sector:'IT Products',   size:'12K', status:'hiring',hiring:890, layoffs:0,  trend:[40,50,60,70,80,90,100],founded:1996,hq:'Chennai'},
+  {name:'Freshworks',     city:'Chennai',  sector:'SaaS',          size:'5K',  status:'hiring',hiring:340, layoffs:0,  trend:[30,45,60,70,80,88,95], founded:2010,hq:'Chennai'},
+  {name:'Ashok Leyland',  city:'Chennai',  sector:'Manufacturing', size:'20K', status:'hiring',hiring:560, layoffs:0,  trend:[50,55,60,65,70,75,80], founded:1948,hq:'Chennai'},
+  // Delhi/NCR
+  {name:'Paytm',          city:'Delhi',    sector:'Fintech',       size:'8K',  status:'layoff',hiring:0,   layoffs:450,trend:[90,80,70,55,40,30,20], founded:2010,hq:'Noida'},
+  {name:'IndiGo',         city:'Delhi',    sector:'Aviation',      size:'30K', status:'hiring',hiring:1200,layoffs:0,  trend:[40,50,60,70,80,90,100],founded:2006,hq:'Gurugram'},
+  {name:'MakeMyTrip',     city:'Delhi',    sector:'Travel Tech',   size:'4K',  status:'mixed', hiring:230, layoffs:78, trend:[70,65,60,65,68,70,72], founded:2000,hq:'Gurugram'},
+  {name:'Info Edge',      city:'Delhi',    sector:'Internet',      size:'5K',  status:'hiring',hiring:234, layoffs:0,  trend:[45,50,55,60,70,80,90], founded:1995,hq:'Noida'},
+  // Pune
+  {name:'Tech Mahindra',  city:'Pune',     sector:'IT Services',   size:'160K',status:'hiring',hiring:1100,layoffs:0,  trend:[55,60,65,70,75,82,90], founded:1986,hq:'Pune'},
+  {name:'Persistent Systems',city:'Pune',  sector:'IT',            size:'22K', status:'hiring',hiring:680, layoffs:0,  trend:[40,50,60,68,78,88,95], founded:1990,hq:'Pune'},
+  {name:'Bajaj Auto',     city:'Pune',     sector:'Manufacturing', size:'20K', status:'hiring',hiring:560, layoffs:0,  trend:[60,62,65,68,70,75,80], founded:1945,hq:'Pune'},
+  {name:'Cognizant',      city:'Pune',     sector:'IT Services',   size:'300K',status:'mixed', hiring:780, layoffs:345,trend:[80,75,72,70,72,74,76], founded:1994,hq:'Chennai'},
+  // Kolkata
+  {name:'ITC Limited',    city:'Kolkata',  sector:'FMCG',          size:'30K', status:'hiring',hiring:678, layoffs:0,  trend:[50,55,58,62,68,75,82], founded:1910,hq:'Kolkata'},
+  {name:'Coal India',     city:'Kolkata',  sector:'Mining',        size:'250K',status:'mixed', hiring:450, layoffs:120,trend:[60,58,55,55,58,60,62], founded:1975,hq:'Kolkata'},
+  // Ahmedabad
+  {name:'Adani Group',    city:'Ahmedabad',sector:'Infrastructure', size:'25K',status:'hiring',hiring:1200,layoffs:0,  trend:[40,50,60,70,80,90,100],founded:1988,hq:'Ahmedabad'},
+  {name:'Torrent Pharma', city:'Ahmedabad',sector:'Pharma',        size:'8K',  status:'hiring',hiring:456, layoffs:0,  trend:[50,55,60,65,70,78,85], founded:1959,hq:'Ahmedabad'},
+  // Other cities
+  {name:'UST Global',     city:'Kochi',    sector:'IT Services',   size:'8K',  status:'hiring',hiring:345, layoffs:0,  trend:[40,50,60,68,75,82,90], founded:1999,hq:'Kochi'},
+  {name:'Infosys BPO',    city:'Jaipur',   sector:'IT Services',   size:'3K',  status:'mixed', hiring:80,  layoffs:20, trend:[60,58,55,55,58,60,62], founded:2004,hq:'Bengaluru'},
+  {name:'IBM India',      city:'Bengaluru',sector:'IT',            size:'100K',status:'layoff',hiring:200, layoffs:2000,trend:[90,85,80,70,60,50,45],founded:1951,hq:'Bengaluru'},
+  {name:'Atlassian',      city:'Hyderabad',sector:'SaaS',          size:'10K', status:'layoff',hiring:0,   layoffs:1600,trend:[90,85,75,60,45,30,20],founded:2002,hq:'Hyderabad'},
+  {name:'Unacademy',      city:'Bengaluru',sector:'EdTech',        size:'3K',  status:'layoff',hiring:0,   layoffs:250,trend:[80,70,60,45,30,25,20], founded:2015,hq:'Bengaluru'},
+  {name:'Hero MotoCorp',  city:'Gurugram', sector:'Manufacturing', size:'40K', status:'hiring',hiring:780, layoffs:0,  trend:[55,58,60,65,70,75,80], founded:1984,hq:'Delhi'},
+  {name:'OYO Rooms',      city:'Gurugram', sector:'Hospitality',   size:'10K', status:'mixed', hiring:320, layoffs:200,trend:[80,70,60,55,55,58,62], founded:2013,hq:'Gurugram'},
+];
 
-// ── State ────────────────────────────────────────────────────────
+// Build company index
+const CO_BY_CITY = {};
+const CO_BY_NAME = {};
+COMPANIES_DB.forEach(c => {
+  if (!CO_BY_CITY[c.city]) CO_BY_CITY[c.city] = [];
+  CO_BY_CITY[c.city].push(c);
+  CO_BY_NAME[c.name.toLowerCase()] = c;
+});
+
 let DISTRICTS = [];
 let curMode   = 'hiring';
 let curCity   = null;
+let curCo     = null;
+let searchType= 'all';
+let searchQ   = '';
 
-// ── Map ──────────────────────────────────────────────────────────
-const map = L.map('map', {center:[20.5937,78.9629], zoom:5, attributionControl:false});
-L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:19}).addTo(map);
+const map = L.map('map',{center:[20.5937,78.9629],zoom:5,attributionControl:false});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
 let markerLayer = L.layerGroup().addTo(map);
+</script>
 
-// ── Load data ────────────────────────────────────────────────────
+<script>
+// ── Data loading ────────────────────────────────────────────────
 fetch('data/india_summary.json')
-  .then(r => r.json())
-  .then(d => init(d.districts || []))
-  .catch(() => init([]));
+  .then(r=>r.json())
+  .then(d=>init(d.districts||[]))
+  .catch(()=>init([]));
 
-function init(raw) {
-  DISTRICTS = raw
-    .filter(d => d.city)
-    .map(d => ({
-      id:       d.city.toLowerCase().replace(/ /g,'_'),
-      name:     d.city,
-      state:    '',
-      lat:      d.lat,
-      lng:      d.lng,
-      hiring:   d.total_hiring   || 0,
-      layoffs:  d.total_layoffs  || 0,
-      companies:d.total_companies|| 0,
-      growth:   d.growth_score   || 0,
-      sentiment:d.avg_sentiment  || 0,
-    }));
-
-  // rank all modes
-  ['hiring','layoffs','companies','growth'].forEach(m => {
-    [...DISTRICTS].sort((a,b) => b[m]-a[m]).forEach((d,i) => { d['r_'+m] = i+1; });
+function init(raw){
+  DISTRICTS = raw.filter(d=>d.city).map(d=>({
+    id:       d.city.toLowerCase().replace(/ /g,'_'),
+    name:     d.city,
+    lat:      d.lat, lng: d.lng,
+    hiring:   d.total_hiring   ||0,
+    layoffs:  d.total_layoffs  ||0,
+    companies:d.total_companies||0,
+    growth:   d.growth_score   ||0,
+    sentiment:d.avg_sentiment  ||0,
+  }));
+  ['hiring','layoffs','companies','growth'].forEach(m=>{
+    [...DISTRICTS].sort((a,b)=>b[m]-a[m]).forEach((d,i)=>{d['r_'+m]=i+1;});
   });
-
   updateAnswerCards();
   buildMarkers('hiring');
   renderRankings('hiring');
   buildSectorBar();
-  document.getElementById('tick-text').textContent = INSIGHTS[0];
+  document.getElementById('tick-text').textContent=INSIGHTS[0];
 }
 
-// ── Markers ──────────────────────────────────────────────────────
-function buildMarkers(mode) {
+// ── Map markers ──────────────────────────────────────────────────
+function buildMarkers(mode){
   markerLayer.clearLayers();
-  DISTRICTS.forEach(d => {
-    const cfg  = MODE[mode];
-    const vals = DISTRICTS.map(x => x[mode]);
-    const maxV = Math.max(...vals), minV = Math.min(...vals);
-    const t    = maxV === minV ? .5 : (d[mode]-minV)/(maxV-minV);
-    const sz   = Math.round(18 + t * 50);
-    const rank = d['r_'+mode];
-    const c    = cfg.color;
-    const glow = rank <= 3 ? `box-shadow:0 0 ${sz/2}px ${c}66;` : '';
-    const nc   = rank===1?'#fbbf24':rank===2?'#94a3b8':rank===3?'#c2845a':c;
-    const nStyle = `font-size:${Math.max(9,Math.round(sz*.32))}px;font-weight:900;color:${nc};`;
-    const badge  = rank<=10 ? `<span style="${nStyle}">${rank}</span>` : '';
-    const fire   = rank===1 ? `<div style="position:absolute;top:-9px;right:-7px;font-size:14px;">🔥</div>` : '';
-
-    const icon = L.divIcon({
-      className:'',
-      html:`<div style="width:${sz}px;height:${sz}px;background:${c}22;border:2px solid ${c}88;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;${glow}position:relative;">${badge}${fire}</div>`,
-      iconSize:[sz,sz], iconAnchor:[sz/2,sz/2]
-    });
-
-    const val = mode==='growth' ? `+${d[mode].toFixed(1)}` : d[mode].toLocaleString();
-    const tt  = `<div style="background:#0c1a30;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:12px 16px;min-width:190px;">
-      <div style="font-weight:800;font-size:14px;margin-bottom:4px;">${d.name}</div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-        <span style="font-size:12px;color:#94a3b8;">${cfg.icon} ${cfg.label}</span>
+  const key = mode==='search'?'hiring':mode;
+  DISTRICTS.forEach(d=>{
+    const cfg=MODE[key], c=cfg.color;
+    const vals=DISTRICTS.map(x=>x[key]);
+    const maxV=Math.max(...vals),minV=Math.min(...vals);
+    const t=maxV===minV?.5:(d[key]-minV)/(maxV-minV);
+    const sz=Math.round(16+t*50);
+    const rank=d['r_'+key];
+    const glow=rank<=3?`box-shadow:0 0 ${sz/2}px ${c}66;`:'';
+    const nc=rank===1?'#fbbf24':rank===2?'#94a3b8':rank===3?'#c2845a':c;
+    const ns=`font-size:${Math.max(9,Math.round(sz*.32))}px;font-weight:900;color:${nc};`;
+    const badge=rank<=10?`<span style="${ns}">${rank}</span>`:'';
+    const fire=rank===1?`<div style="position:absolute;top:-8px;right:-6px;font-size:13px;">🔥</div>`:'';
+    const val=key==='growth'?`+${d[key].toFixed(1)}`:d[key].toLocaleString();
+    const cos=CO_BY_CITY[d.name]||[];
+    const hiCos=cos.filter(c=>c.status==='hiring').length;
+    const laCos=cos.filter(c=>c.status==='layoff').length;
+    const tt=`<div style="background:#0c1a30;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:12px 16px;min-width:200px;">
+      <div style="font-weight:800;font-size:14px;margin-bottom:6px;">${d.name}</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+        <span style="font-size:11px;color:#94a3b8;">${cfg.icon} ${cfg.label}</span>
         <span style="font-size:15px;font-weight:800;color:${c};">${val}</span>
       </div>
-      <div style="display:flex;gap:12px;padding-top:6px;border-top:1px solid rgba(255,255,255,.07);">
-        <span style="font-size:11px;color:#10b981;">▲ ${d.hiring.toLocaleString()}</span>
-        <span style="font-size:11px;color:#f43f5e;">▼ ${d.layoffs.toLocaleString()}</span>
-        <span style="font-size:11px;color:#3b82f6;">🏢 ${d.companies}</span>
+      <div style="display:flex;gap:10px;padding-top:6px;border-top:1px solid rgba(255,255,255,.07);margin-bottom:6px;">
+        <span style="font-size:11px;color:#10b981;">▲ ${d.hiring.toLocaleString()} hiring</span>
+        <span style="font-size:11px;color:#f43f5e;">▼ ${d.layoffs.toLocaleString()} layoffs</span>
       </div>
-      <div style="font-size:10px;color:#4a5568;margin-top:5px;">Rank #${rank} nationally</div>
+      <div style="font-size:10px;color:#94a3b8;">🏢 ${cos.length} companies tracked · ${hiCos} hiring · ${laCos} layoffs</div>
+      <div style="font-size:10px;color:#4a5568;margin-top:4px;">Rank #${rank} nationally</div>
     </div>`;
-
-    L.marker([d.lat,d.lng], {icon, zIndexOffset:rank===1?1000:500-rank})
-      .bindTooltip(tt, {permanent:false, direction:'top', opacity:1})
-      .on('click', () => openCity(d.id))
-      .addTo(markerLayer);
+    L.marker([d.lat,d.lng],{
+      icon:L.divIcon({className:'',
+        html:`<div style="width:${sz}px;height:${sz}px;background:${c}22;border:2px solid ${c}88;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;${glow}position:relative;">${badge}${fire}</div>`,
+        iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]}),
+      zIndexOffset:rank===1?1000:500-rank
+    })
+    .bindTooltip(tt,{permanent:false,direction:'top',opacity:1})
+    .on('click',()=>openCity(d.id))
+    .addTo(markerLayer);
   });
 }
+</script>
 
-// ── Panel ────────────────────────────────────────────────────────
-function renderRankings(mode, filter='') {
-  const cfg = MODE[mode];
-  document.getElementById('ph-title').textContent = `Top Cities by ${cfg.label}`;
-  document.getElementById('ph-sub').textContent   = 'Click any city bubble on the map';
-  document.getElementById('ph-crumb').style.display = 'none';
-
-  let list = filter
-    ? DISTRICTS.filter(d => d.name.toLowerCase().includes(filter.toLowerCase()))
-    : [...DISTRICTS].sort((a,b) => b[mode]-a[mode]).slice(0,12);
-
-  const maxV = Math.max(...list.map(d => d[mode]));
-  document.getElementById('pc').innerHTML = '<div class="animate">' +
-    list.map((d,i) => {
-      const rank = filter ? d['r_'+mode] : i+1;
-      const nc   = rank===1?'rk-1':rank===2?'rk-2':rank===3?'rk-3':'rk-n';
-      const val  = mode==='growth' ? `+${d[mode].toFixed(1)}` : d[mode].toLocaleString();
-      const bp   = maxV ? Math.round(d[mode]/maxV*100) : 0;
-      return `<div class="rk-item${curCity===d.id?' on':''}" onclick="openCity('${d.id}')" style="--mc:${cfg.color}">
-        <div class="rk-num ${nc}">${rank}</div>
-        <div class="rk-body">
-          <div class="rk-name">${d.name}</div>
-          <div class="rk-bar" style="width:${bp}%;background:${cfg.color};"></div>
-        </div>
-        <div class="rk-right">
-          <div class="rk-val" style="color:${cfg.color}">${val}</div>
-          <div class="rk-sub">${cfg.unit}</div>
-        </div>
-      </div>`;
-    }).join('') + '</div>';
-}
-
-function openCity(id) {
-  curCity = id;
-  const d = DISTRICTS.find(x => x.id===id);
-  if (!d) return;
-  map.flyTo([d.lat,d.lng], 9, {duration:.8});
-
-  document.getElementById('ph-title').textContent = d.name;
-  document.getElementById('ph-sub').textContent   = 'Company signals';
-  const crumb = document.getElementById('ph-crumb');
-  crumb.style.display = 'block';
-  crumb.innerHTML = `<span class="crumb-link" onclick="goBack()">← All Cities</span>`;
-
-  const cos    = COMPANIES[d.name] || [];
-  const header = `<div class="city-header">
+<script>
+// ── City view ─────────────────────────────────────────────────
+function openCity(id){
+  curCity=id; curCo=null;
+  const d=DISTRICTS.find(x=>x.id===id);
+  if(!d) return;
+  map.flyTo([d.lat,d.lng],9,{duration:.8});
+  setHeader(d.name,'Company trends · click company for details',
+    `<span class="crumb-link" onclick="goBack()">← All Cities</span>`);
+  const cos=CO_BY_CITY[d.name]||[];
+  const sorted=[...cos].sort((a,b)=>{
+    const score=(x)=>x.status==='hiring'?2:x.status==='layoff'?0:1;
+    return score(b)-score(a)||b.hiring-a.hiring;
+  });
+  const header=`<div class="city-header">
     <div class="city-h-name">${d.name}</div>
-    <div class="city-h-state">Live signals from news + scrapers</div>
+    <div class="city-h-sub">Live hiring & layoff signals from pipeline</div>
     <div class="city-stats">
       <div class="cstat"><div class="cstat-v" style="color:var(--green)">${d.hiring.toLocaleString()}</div><div class="cstat-l">Hiring</div></div>
       <div class="cstat"><div class="cstat-v" style="color:var(--red)">${d.layoffs.toLocaleString()}</div><div class="cstat-l">Layoffs</div></div>
-      <div class="cstat"><div class="cstat-v" style="color:var(--blue)">${d.companies}</div><div class="cstat-l">Companies</div></div>
+      <div class="cstat"><div class="cstat-v" style="color:var(--blue)">${cos.length}</div><div class="cstat-l">Companies</div></div>
       <div class="cstat"><div class="cstat-v" style="color:var(--purple)">+${d.growth.toFixed(1)}</div><div class="cstat-l">Growth</div></div>
     </div>
   </div>`;
+  const coHtml=sorted.length?sorted.map(c=>coCard(c,true)).join('')
+    :`<div class="empty-state">No company data for this city yet.<br>Pipeline will populate on next run.</div>`;
+  document.getElementById('pc').innerHTML=`<div class="animate">${header}${coHtml}</div>`;
+  document.getElementById('si').value='';
+}
 
-  const coHtml = cos.length ? cos.map(c => {
-    const isH=c.status==='hiring', isL=c.status==='layoff';
-    const bc=isH?'badge-h':isL?'badge-l':'badge-m';
-    const bl=isH?'Hiring':isL?'Layoff':'Mixed';
-    const vc=isH?'var(--green)':isL?'var(--red)':'var(--amber)';
-    const vt=isH?`+${c.val.toLocaleString()}`:isL?`-${c.val.toLocaleString()}`:c.trend;
-    const col=avatarColor(c.name);
-    const ini=c.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
-    return `<div class="co-item">
-      <div class="co-avatar" style="background:${col}22;color:${col};">${ini}</div>
-      <div class="co-body">
-        <div class="co-name">${c.name}</div>
-        <div class="co-meta">${c.sector} · ${c.size}</div>
-        <span class="badge ${bc}">${bl}</span>
+// ── Company card ──────────────────────────────────────────────
+function coCard(c, showCity=false){
+  const isH=c.status==='hiring',isL=c.status==='layoff';
+  const bc=isH?'badge-h':isL?'badge-l':'badge-m';
+  const bl=isH?'Hiring':isL?'Layoff':'Mixed';
+  const vc=isH?'var(--green)':isL?'var(--red)':'var(--amber)';
+  const val=isH?`+${c.hiring.toLocaleString()}`:isL?`-${c.layoffs.toLocaleString()}`:`+${c.hiring}/-${c.layoffs}`;
+  const col=avatarColor(c.name);
+  const ini=c.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const spark=sparkline(c.trend,isH?'#10b981':isL?'#f43f5e':'#f59e0b');
+  const trendPct=c.trend.length>=2?((c.trend[c.trend.length-1]-c.trend[0])/c.trend[0]*100).toFixed(0):0;
+  const trendStr=trendPct>0?`+${trendPct}%`:`${trendPct}%`;
+  const trendColor=trendPct>0?'var(--green)':trendPct<0?'var(--red)':'var(--muted)';
+  return `<div class="co-item" onclick="openCompany('${c.name.replace(/'/g,"\\'")}')">
+    <div class="co-avatar" style="background:${col}22;color:${col};">${ini}</div>
+    <div class="co-body">
+      <div class="co-name">${c.name}</div>
+      <div class="co-meta">${c.sector} · ${c.size} emp${showCity?'':''}</div>
+      ${showCity?`<span class="co-city-tag">📍 ${c.city}</span> `:''}
+      <span class="badge ${bc}">${bl}</span>
+      ${spark}
+    </div>
+    <div class="co-right">
+      <div class="co-val" style="color:${vc}">${val}</div>
+      <div class="co-trend" style="color:${trendColor}">${trendStr} trend</div>
+    </div>
+  </div>`;
+}
+
+// ── Company detail ────────────────────────────────────────────
+function openCompany(name){
+  const c=COMPANIES_DB.find(x=>x.name===name);
+  if(!c) return;
+  curCo=name;
+  const isH=c.status==='hiring',isL=c.status==='layoff';
+  const vc=isH?'var(--green)':isL?'var(--red)':'var(--amber)';
+  const bc=isH?'badge-h':isL?'badge-l':'badge-m';
+  const bl=isH?'✅ Actively Hiring':isL?'⚠️ Layoffs Reported':'🔄 Mixed Signals';
+  const col=avatarColor(c.name);
+  const ini=c.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+  const cityD=DISTRICTS.find(d=>d.name===c.city);
+  const backLabel=curCity?`← ${c.city}`:'← All Companies';
+  const backFn=curCity?`openCity('${c.city.toLowerCase().replace(/ /g,'_')}')`:'renderAllCompanies()';
+  setHeader(c.name,`${c.sector} · ${c.city}`,
+    `<span class="crumb-link" onclick="${backFn}">${backLabel}</span>`);
+  const trendPcts=c.trend.map((v,i)=>i===0?0:((v-c.trend[i-1])/c.trend[i-1]*100).toFixed(1));
+  const bigSpark=bigSparkline(c.trend,isH?'#10b981':isL?'#f43f5e':'#f59e0b');
+  document.getElementById('pc').innerHTML=`<div class="animate co-detail">
+    <div class="co-detail-header">
+      <div class="co-detail-avatar" style="background:${col}22;color:${col};">${ini}</div>
+      <div>
+        <div class="co-detail-name">${c.name}</div>
+        <div class="co-detail-meta">${c.sector} · Est. ${c.founded} · ${c.size} employees</div>
+        <span class="badge ${bc}" style="margin-top:4px;">${bl}</span>
       </div>
-      <div class="co-right">
-        <div class="co-val" style="color:${vc}">${vt}</div>
-        <div class="co-trend">${c.trend}</div>
+    </div>
+    <div class="co-stats">
+      <div class="co-stat"><div class="co-stat-v" style="color:var(--green)">${c.hiring.toLocaleString()}</div><div class="co-stat-l">Open Roles</div></div>
+      <div class="co-stat"><div class="co-stat-v" style="color:var(--red)">${c.layoffs.toLocaleString()}</div><div class="co-stat-l">Layoffs</div></div>
+      <div class="co-stat"><div class="co-stat-v" style="color:var(--blue)">📍${c.city}</div><div class="co-stat-l">HQ City</div></div>
+    </div>
+    <div style="padding:0 0 10px;">
+      <div class="section-title">6-MONTH HIRING TREND</div>
+      ${bigSpark}
+    </div>
+    <div class="section-title">CITY CONTEXT — ${c.city.toUpperCase()}</div>
+    ${cityD?`<div style="padding:10px 14px;font-size:11px;color:var(--faint);">
+      City has ${cityD.companies} tracked companies · ${cityD.hiring.toLocaleString()} total open roles · ${cityD.layoffs.toLocaleString()} layoffs
+      <br><span style="color:var(--cyan);cursor:pointer;" onclick="openCity('${cityD.id}')">View all ${c.city} companies →</span>
+    </div>`:''}
+    <div class="section-title">OTHER COMPANIES IN ${c.sector.toUpperCase()}</div>
+    ${COMPANIES_DB.filter(x=>x.sector===c.sector&&x.name!==c.name).slice(0,4).map(x=>coCard(x,true)).join('')}
+  </div>`;
+}
+</script>
+
+<script>
+// ── Search ───────────────────────────────────────────────────────
+function doSearch(q){
+  searchQ=q.trim();
+  document.getElementById('search-clear').style.display=q?'block':'none';
+  if(!q){
+    if(curCity) openCity(curCity);
+    else renderRankings(curMode==='search'?'hiring':curMode);
+    return;
+  }
+  const ql=q.toLowerCase();
+  const cityMatches=DISTRICTS.filter(d=>d.name.toLowerCase().includes(ql));
+  const coMatches=COMPANIES_DB.filter(c=>{
+    const nameMatch=c.name.toLowerCase().includes(ql);
+    const sectorMatch=c.sector.toLowerCase().includes(ql);
+    const cityMatch=c.city.toLowerCase().includes(ql);
+    if(searchType==='city')    return cityMatch;
+    if(searchType==='company') return nameMatch||sectorMatch;
+    if(searchType==='hiring')  return (nameMatch||sectorMatch||cityMatch)&&c.status==='hiring';
+    if(searchType==='layoff')  return (nameMatch||sectorMatch||cityMatch)&&c.status==='layoff';
+    return nameMatch||sectorMatch||cityMatch||cityMatches.some(cd=>cd.name===c.city);
+  });
+  setHeader(`Search: "${q}"`,`${cityMatches.length} cities · ${coMatches.length} companies`,'');
+  let html='';
+  if(cityMatches.length&&searchType!=='company'){
+    html+=`<div class="section-title">CITIES (${cityMatches.length})</div>`;
+    html+=cityMatches.map(d=>{
+      const rank=d['r_hiring'];
+      const nc=rank===1?'rk-1':rank===2?'rk-2':rank===3?'rk-3':'rk-n';
+      return `<div class="rk-item" onclick="openCity('${d.id}')">
+        <div class="rk-num ${nc}">${rank}</div>
+        <div class="rk-body"><div class="rk-name">${d.name}</div>
+          <div class="rk-bar" style="width:${Math.round(d.hiring/100)}%;background:#10b981;"></div></div>
+        <div class="rk-right"><div class="rk-val" style="color:#10b981">${d.hiring.toLocaleString()}</div><div class="rk-sub">open roles</div></div>
+      </div>`;
+    }).join('');
+  }
+  if(coMatches.length&&searchType!=='city'){
+    html+=`<div class="section-title">COMPANIES (${coMatches.length})</div>`;
+    html+=coMatches.map(c=>coCard(c,true)).join('');
+  }
+  if(!html) html=`<div class="empty-state">No results for "<b>${q}</b>"<br>Try searching a company name, sector, or city</div>`;
+  document.getElementById('pc').innerHTML=`<div class="animate">${html}</div>`;
+}
+
+function clearSearch(){
+  document.getElementById('si').value='';
+  document.getElementById('search-clear').style.display='none';
+  searchQ='';
+  if(curCity) openCity(curCity);
+  else renderRankings(curMode==='search'?'hiring':curMode);
+}
+
+function setSearchType(type,btn){
+  searchType=type;
+  document.querySelectorAll('.st-btn').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  if(searchQ) doSearch(searchQ);
+}
+
+// ── Rankings ─────────────────────────────────────────────────────
+function renderRankings(mode,filter=''){
+  const cfg=MODE[mode];
+  setHeader(`Top Cities by ${cfg.label}`,'Click any city bubble on the map','');
+  let list=filter
+    ?DISTRICTS.filter(d=>d.name.toLowerCase().includes(filter.toLowerCase()))
+    :[...DISTRICTS].sort((a,b)=>b[mode]-a[mode]).slice(0,15);
+  const maxV=Math.max(...list.map(d=>d[mode]),1);
+  document.getElementById('pc').innerHTML='<div class="animate">'+list.map((d,i)=>{
+    const rank=filter?d['r_'+mode]:i+1;
+    const nc=rank===1?'rk-1':rank===2?'rk-2':rank===3?'rk-3':'rk-n';
+    const val=mode==='growth'?`+${d[mode].toFixed(1)}`:d[mode].toLocaleString();
+    const bp=Math.round(d[mode]/maxV*100);
+    const cos=CO_BY_CITY[d.name]||[];
+    const hiN=cos.filter(c=>c.status==='hiring').length;
+    const laN=cos.filter(c=>c.status==='layoff').length;
+    return `<div class="rk-item${curCity===d.id?' on':''}" onclick="openCity('${d.id}')" style="--mc:${cfg.color}">
+      <div class="rk-num ${nc}">${rank}</div>
+      <div class="rk-body">
+        <div class="rk-name">${d.name}</div>
+        <div class="rk-meta">${cos.length} cos · <span style="color:var(--green)">▲${hiN}</span> <span style="color:var(--red)">▼${laN}</span></div>
+        <div class="rk-bar" style="width:${bp}%;background:${cfg.color};"></div>
+      </div>
+      <div class="rk-right">
+        <div class="rk-val" style="color:${cfg.color}">${val}</div>
+        <div class="rk-sub">${cfg.unit}</div>
       </div>
     </div>`;
-  }).join('') : `<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px;">No company data yet.<br>Run the pipeline to populate.</div>`;
-
-  document.getElementById('pc').innerHTML = `<div class="animate">${header}${coHtml}</div>`;
-  document.getElementById('si').value = '';
+  }).join('')+'</div>';
 }
 
-function goBack() {
-  curCity = null;
-  map.flyTo([20.5937,78.9629], 5, {duration:.8});
-  renderRankings(curMode);
+function renderAllCompanies(){
+  curCity=null; curCo=null;
+  setHeader('All Companies','Search or filter by city, sector, or status','');
+  const sorted=[...COMPANIES_DB].sort((a,b)=>b.hiring-a.hiring);
+  document.getElementById('pc').innerHTML='<div class="animate">'+sorted.map(c=>coCard(c,true)).join('')+'</div>';
+}
+</script>
+
+<script>
+// ── Sparklines ───────────────────────────────────────────────────
+function sparkline(data,color){
+  if(!data||!data.length) return '';
+  const max=Math.max(...data),min=Math.min(...data),range=max-min||1;
+  const bars=data.map(v=>{
+    const h=Math.max(2,Math.round(((v-min)/range)*18));
+    return `<span style="height:${h}px;background:${color};opacity:.7;"></span>`;
+  }).join('');
+  return `<div class="trend-bar">${bars}</div>`;
 }
 
-function setMode(mode, btn) {
-  curMode = mode; curCity = null;
-  document.querySelectorAll('.mbt').forEach(b => b.classList.remove('on'));
-  btn.classList.add('on');
-  buildMarkers(mode);
-  renderRankings(mode);
-  document.getElementById('si').value = '';
+function bigSparkline(data,color){
+  if(!data||!data.length) return '';
+  const max=Math.max(...data),min=Math.min(...data),range=max-min||1;
+  const w=320,h=60,pad=4;
+  const pts=data.map((v,i)=>{
+    const x=pad+(i/(data.length-1))*(w-pad*2);
+    const y=h-pad-((v-min)/range)*(h-pad*2);
+    return `${x},${y}`;
+  }).join(' ');
+  const area=`${pad},${h} ${pts} ${w-pad},${h}`;
+  const months=['6M ago','5M','4M','3M','2M','1M','Now'].slice(-data.length);
+  const labels=months.map((m,i)=>{
+    const x=pad+(i/(data.length-1))*(w-pad*2);
+    return `<text x="${x}" y="${h+14}" text-anchor="middle" font-size="9" fill="#6b7a96">${m}</text>`;
+  }).join('');
+  return `<div style="padding:0 14px;">
+    <svg width="100%" viewBox="0 0 ${w} ${h+20}" style="overflow:visible;">
+      <defs><linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="${color}" stop-opacity=".3"/>
+        <stop offset="100%" stop-color="${color}" stop-opacity=".02"/>
+      </linearGradient></defs>
+      <polygon points="${area}" fill="url(#sg)"/>
+      <polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round"/>
+      ${data.map((v,i)=>{
+        const x=pad+(i/(data.length-1))*(w-pad*2);
+        const y=h-pad-((v-min)/range)*(h-pad*2);
+        return `<circle cx="${x}" cy="${y}" r="3" fill="${color}"/>`;
+      }).join('')}
+      ${labels}
+    </svg>
+  </div>`;
 }
 
-function focusAnswer(mode) {
-  const btn = document.querySelector(`.mbt:nth-child(${['hiring','layoffs','companies','growth'].indexOf(mode)+1})`);
-  setMode(mode, btn);
-}
-
-function doSearch(q) {
-  if (!q) { renderRankings(curMode); return; }
-  renderRankings(curMode, q);
-}
-
-function avatarColor(name) {
+// ── Helpers ──────────────────────────────────────────────────────
+function avatarColor(name){
   const p=['#06b6d4','#8b5cf6','#10b981','#f59e0b','#3b82f6','#ec4899','#f43f5e','#84cc16'];
   let h=0; for(let c of name) h=(h*31+c.charCodeAt(0))%p.length;
   return p[h];
 }
 
-function updateAnswerCards() {
-  if (!DISTRICTS.length) return;
+function setHeader(title,sub,crumb){
+  document.getElementById('ph-title').textContent=title;
+  document.getElementById('ph-sub').textContent=sub;
+  const el=document.getElementById('ph-crumb');
+  el.innerHTML=crumb;
+  el.style.display=crumb?'block':'none';
+}
+
+function goBack(){
+  curCity=null; curCo=null;
+  map.flyTo([20.5937,78.9629],5,{duration:.8});
+  renderRankings(curMode==='search'?'hiring':curMode);
+}
+
+function setMode(mode,btn){
+  curMode=mode; curCity=null; curCo=null;
+  document.querySelectorAll('.mbt').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  if(mode==='search'){
+    buildMarkers('hiring');
+    setHeader('Search','Type company name, city, or sector','');
+    document.getElementById('pc').innerHTML='<div class="empty-state">Start typing above to search<br>cities and companies…</div>';
+    document.getElementById('si').focus();
+  } else {
+    buildMarkers(mode);
+    renderRankings(mode);
+  }
+  document.getElementById('si').value='';
+  document.getElementById('search-clear').style.display='none';
+}
+
+function focusAnswer(mode){
+  const idx=['hiring','layoffs','companies','growth'].indexOf(mode);
+  const btn=document.querySelectorAll('.mbt')[idx];
+  if(btn) setMode(mode,btn);
+}
+
+function updateAnswerCards(){
+  if(!DISTRICTS.length) return;
   const sH=[...DISTRICTS].sort((a,b)=>b.hiring-a.hiring)[0];
   const sL=[...DISTRICTS].sort((a,b)=>b.layoffs-a.layoffs)[0];
   const sC=[...DISTRICTS].sort((a,b)=>b.companies-a.companies)[0];
   const sG=[...DISTRICTS].sort((a,b)=>b.growth-a.growth)[0];
-  document.getElementById('a-h-city').textContent = sH.name;
-  document.getElementById('a-h-val').textContent  = `${sH.hiring.toLocaleString()} roles`;
-  document.getElementById('a-l-city').textContent = sL.name;
-  document.getElementById('a-l-val').textContent  = `${sL.layoffs.toLocaleString()} affected`;
-  document.getElementById('a-c-city').textContent = sC.name;
-  document.getElementById('a-c-val').textContent  = `${sC.companies} companies`;
-  document.getElementById('a-g-city').textContent = sG.name;
-  document.getElementById('a-g-val').textContent  = `+${sG.growth.toFixed(1)} score`;
+  document.getElementById('a-h-city').textContent=sH.name;
+  document.getElementById('a-h-val').textContent=`${sH.hiring.toLocaleString()} roles`;
+  document.getElementById('a-l-city').textContent=sL.name;
+  document.getElementById('a-l-val').textContent=`${sL.layoffs.toLocaleString()} affected`;
+  document.getElementById('a-c-city').textContent=sC.name;
+  document.getElementById('a-c-val').textContent=`${sC.companies} companies`;
+  document.getElementById('a-g-city').textContent=sG.name;
+  document.getElementById('a-g-val').textContent=`+${sG.growth.toFixed(1)} score`;
 }
 
-function buildSectorBar() {
+function buildSectorBar(){
   const segs=[
     {l:'IT/Tech',p:38,c:'#10b981'},{l:'Finance',p:14,c:'#3b82f6'},
     {l:'Mfg',p:19,c:'#f59e0b'},{l:'E-Comm',p:10,c:'#8b5cf6'},
     {l:'Health',p:6,c:'#ec4899'},{l:'Fintech',p:7,c:'#84cc16'},
     {l:'EdTech▼',p:6,c:'#f43f5e'},
   ];
-  document.getElementById('sbar').innerHTML = segs.map(s =>
-    `<div class="sb-seg" style="flex:${s.p};background:${s.c}18;color:${s.c};border-right:1px solid var(--border);" title="${s.l}: ${s.p}%">${s.p>8?s.l:''}</div>`
+  document.getElementById('sbar').innerHTML=segs.map(s=>
+    `<div class="sb-seg" style="flex:${s.p};background:${s.c}18;color:${s.c};border-right:1px solid var(--border);" title="${s.l}">${s.p>8?s.l:''}</div>`
   ).join('');
 }
 
-let tickIdx = 0;
-function rotateTicker() {
-  const el = document.getElementById('tick-text');
+let tickIdx=0;
+function rotateTicker(){
+  const el=document.getElementById('tick-text');
   el.classList.add('fade');
-  setTimeout(() => {
-    tickIdx = (tickIdx+1) % INSIGHTS.length;
-    el.textContent = INSIGHTS[tickIdx];
-    el.classList.remove('fade');
-  }, 400);
+  setTimeout(()=>{tickIdx=(tickIdx+1)%INSIGHTS.length;el.textContent=INSIGHTS[tickIdx];el.classList.remove('fade');},400);
+}
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clock').textContent=
+    String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
 }
 
-function updateClock() {
-  const n = new Date();
-  document.getElementById('clock').textContent =
-    String(n.getHours()).padStart(2,'0') + ':' +
-    String(n.getMinutes()).padStart(2,'0') + ':' +
-    String(n.getSeconds()).padStart(2,'0');
-}
-
-setInterval(updateClock, 1000);
-setInterval(rotateTicker, 5000);
+setInterval(updateClock,1000);
+setInterval(rotateTicker,5000);
 updateClock();
 </script>
 </body>

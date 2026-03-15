@@ -23,6 +23,7 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: 'requirements_pipeline.txt'
 
       - name: Install dependencies
         run: pip install -r requirements_pipeline.txt
@@ -85,6 +86,7 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
+          cache-dependency-path: 'requirements_pipeline.txt'
 
       - name: Install dependencies
         run: pip install -r requirements_pipeline.txt

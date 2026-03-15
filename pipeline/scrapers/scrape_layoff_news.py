@@ -51,21 +51,30 @@ LAYOFF_KEYWORDS = [
     "layoffs India", "job cuts India", "retrenchment India",
     "workforce reduction India", "employees fired India",
     "pink slip India tech", "mass layoffs Bengaluru",
-    "startup layoffs India 2024",
+    "startup layoffs India 2024", "mass layoffs Hyderabad",
+    "mass layoffs Chennai", "mass layoffs Pune",
 ]
 
 HIRING_KEYWORDS = [
     "hiring India technology", "mass hiring India IT",
     "India tech jobs 2024", "freshers hiring India",
     "campus hiring India", "lateral hiring India tech",
+    "hiring Bengaluru", "hiring Hyderabad", "hiring Chennai",
 ]
 
 # ── Indian city / district names for location extraction ──────────
 INDIA_CITIES = {
-    "bengaluru", "bangalore", "mumbai", "hyderabad", "chennai",
-    "delhi", "new delhi", "pune", "kolkata", "ahmedabad",
-    "gurgaon", "gurugram", "noida", "jaipur", "kochi",
-    "indore", "nagpur", "surat", "visakhapatnam", "chandigarh",
+    "bengaluru","bangalore","mumbai","hyderabad","chennai",
+    "delhi","new delhi","pune","kolkata","ahmedabad",
+    "gurgaon","gurugram","noida","jaipur","kochi","cochin",
+    "indore","nagpur","surat","chandigarh","lucknow","bhopal",
+    "coimbatore","vadodara","visakhapatnam","vizag","patna",
+    "ludhiana","mysore","mysuru","thiruvananthapuram","trivandrum",
+    "bhubaneswar","dehradun","nashik","rajkot","madurai","ranchi",
+    "guwahati","jodhpur","vijayawada","faridabad","ghaziabad",
+    "hubli","hubballi","mangalore","mangaluru","udaipur",
+    "aurangabad","thane","kota","kozhikode","warangal","raipur",
+    "varanasi","agra","amritsar","jabalpur","meerut","guntur",
 }
 
 # ── Google News RSS feeds ──────────────────────────────────────────

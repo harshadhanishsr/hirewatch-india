@@ -43,10 +43,20 @@ RUN_TS    = os.getenv("RUN_TS", datetime.now(timezone.utc).strftime("%Y%m%dT%H%M
 BATCH_TS  = datetime.now(timezone.utc).isoformat()
 
 CITIES = [
-    "bangalore", "mumbai", "hyderabad", "chennai",
-    "delhi",     "pune",   "kolkata",   "ahmedabad",
-    "gurgaon",   "noida",  "jaipur",    "kochi",
-    "indore",    "nagpur", "surat",
+    # Tier 1 — major metros
+    "bangalore", "mumbai", "hyderabad", "chennai", "delhi",
+    "pune",      "kolkata", "ahmedabad",
+    # Tier 2 — large cities
+    "gurgaon",   "noida",   "jaipur",   "kochi",    "indore",
+    "nagpur",    "surat",   "chandigarh","lucknow",  "bhopal",
+    "coimbatore","vadodara","visakhapatnam","patna", "ludhiana",
+    # Tier 3 — emerging tech hubs
+    "mysore",    "thiruvananthapuram","bhubaneswar","dehradun","raipur",
+    "nashik",    "rajkot",  "madurai",  "varanasi",  "agra",
+    "amritsar",  "jabalpur","meerut",   "ranchi",    "guwahati",
+    "jodhpur",   "vijayawada","faridabad","ghaziabad","tiruchirappalli",
+    "hubli",     "mangalore","udaipur",  "aurangabad","navi-mumbai",
+    "thane",     "kota",    "kozhikode","guntur",    "warangal",
 ]
 
 # Naukri search URL template — public, no auth needed

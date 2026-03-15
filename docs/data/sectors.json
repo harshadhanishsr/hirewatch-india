@@ -1,0 +1,11 @@
+{
+  "updated_at": "2026-03-15",
+  "sectors": [
+    {
+      "sector": "Technology",
+      "total_hiring": 0,
+      "total_layoffs": 1600,
+      "total_companies": 13
+    }
+  ]
+}

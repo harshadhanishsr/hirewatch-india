@@ -1,0 +1,192 @@
+# ════════════════════════════════════════════════════════════════
+# HireWatch India — Automated Data Pipeline
+# Runs FREE on GitHub Actions (public repo = unlimited minutes)
+# Schedule: every hour.
+#
+# ZERO COST STACK:
+#   GitHub Actions  → scraping + ETL + orchestration (free, no Databricks)
+#   AWS S3          → raw + gold data storage (free tier)
+#   GitHub Pages    → dashboard hosting (free)
+#
+# SECRETS REQUIRED (Settings → Secrets → Actions):
+#   AWS_ACCESS_KEY_ID
+#   AWS_SECRET_ACCESS_KEY
+#   NEWS_API_KEY
+# ════════════════════════════════════════════════════════════════
+
+name: HireWatch India — Hourly Data Pipeline
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # Every hour — change to '*/30 * * * *' for 30-min
+  workflow_dispatch:        # Manual trigger from GitHub UI
+
+env:
+  AWS_REGION:    ap-south-2
+  S3_RAW_BUCKET: hirewatch-raw-india
+  S3_GOLD_BUCKET: hirewatch-gold-india
+
+jobs:
+
+  # ────────────────────────────────────────────────────────
+  # STAGE 1: INGEST — scrape all sources → S3 bronze
+  # ────────────────────────────────────────────────────────
+  ingest:
+    name: "Stage 1 — Ingest Raw Data"
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements_pipeline.txt
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Scrape Naukri job listings
+        run: python pipeline/scrapers/scrape_naukri.py
+        env:
+          S3_BUCKET: ${{ env.S3_RAW_BUCKET }}
+          RUN_TS:    ${{ github.run_id }}
+
+      - name: Scrape LinkedIn public job data
+        run: python pipeline/scrapers/scrape_linkedin.py
+        env:
+          S3_BUCKET: ${{ env.S3_RAW_BUCKET }}
+          RUN_TS:    ${{ github.run_id }}
+
+      - name: Fetch EPFO employment data
+        run: python pipeline/scrapers/fetch_epfo.py
+        env:
+          S3_BUCKET: ${{ env.S3_RAW_BUCKET }}
+          RUN_TS:    ${{ github.run_id }}
+
+      - name: Scrape layoff + hiring news signals
+        run: python pipeline/scrapers/scrape_layoff_news.py
+        env:
+          S3_BUCKET:    ${{ env.S3_RAW_BUCKET }}
+          NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+          RUN_TS:       ${{ github.run_id }}
+
+      - name: Sync MCA21 company master (schedule runs only)
+        if: github.event_name == 'schedule'
+        run: python pipeline/scrapers/sync_mca21.py
+        env:
+          S3_BUCKET: ${{ env.S3_RAW_BUCKET }}
+          RUN_TS:    ${{ github.run_id }}
+
+      - name: Upload manifest to S3
+        run: |
+          echo "{\"batch_ts\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"run_id\":\"${{ github.run_id }}\"}" \
+            > /tmp/manifest.json
+          aws s3 cp /tmp/manifest.json \
+            s3://${{ env.S3_RAW_BUCKET }}/manifests/$(date -u +%Y/%m/%d/%H)/manifest.json
+
+  # ────────────────────────────────────────────────────────
+  # STAGE 2: PROCESS — Python ETL inside GitHub Actions
+  #   No Databricks. No cluster. No waiting. Pure Python.
+  #   Reads bronze S3 → transforms → writes gold S3.
+  # ────────────────────────────────────────────────────────
+  process:
+    name: "Stage 2 — Python ETL (Bronze → Gold)"
+    needs: ingest
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: pip install -r requirements_pipeline.txt
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Run ETL — Bronze → Silver → Gold
+        run: python pipeline/etl/hirewatch_etl.py
+        env:
+          S3_BUCKET:        ${{ env.S3_RAW_BUCKET }}
+          S3_OUTPUT_BUCKET: ${{ env.S3_GOLD_BUCKET }}
+          RUN_TS:           ${{ github.run_id }}
+
+  # ────────────────────────────────────────────────────────
+  # STAGE 3: SERVE — pull Gold JSON → commit to GitHub Pages
+  # ────────────────────────────────────────────────────────
+  serve:
+    name: "Stage 3 — Publish to GitHub Pages"
+    needs: process
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Pull Gold JSON from S3
+        run: |
+          mkdir -p docs/data
+          aws s3 sync s3://${{ env.S3_GOLD_BUCKET }}/data/ docs/data/ --delete
+
+      - name: Write freshness timestamp
+        run: |
+          echo "{\"last_updated\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\"batch_run\":\"${{ github.run_id }}\",\"engine\":\"python-pandas\"}" \
+            > docs/data/meta.json
+
+      - name: Commit and push to GitHub Pages
+        run: |
+          git config user.name  "HireWatch Bot"
+          git config user.email "hirewatch-bot@users.noreply.github.com"
+          git add docs/data/
+          git diff --staged --quiet || git commit -m \
+            "data: $(date -u '+%Y-%m-%d %H:%M UTC') [skip ci]"
+          git push
+
+  # ────────────────────────────────────────────────────────
+  # STAGE 4: NOTIFY — auto GitHub Issue on failure
+  # ────────────────────────────────────────────────────────
+  notify-failure:
+    name: "Notify on Failure"
+    needs: [ingest, process, serve]
+    runs-on: ubuntu-latest
+    if: failure()
+    steps:
+      - name: Create GitHub Issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo:  context.repo.repo,
+              title: `⚠️ Pipeline failed — ${new Date().toISOString()}`,
+              body:  `Run [#${{ github.run_id }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}) failed.\n\nCheck the logs above.`,
+              labels: ['pipeline-failure']
+            })

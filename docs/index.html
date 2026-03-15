@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>HireWatch India — Live Hiring & Layoff Intelligence</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --bg:#020b18; --s1:#060f20; --s2:#0c1a30;
+  --card:rgba(255,255,255,.05); --border:rgba(255,255,255,.08);
+  --b2:rgba(255,255,255,.14);
+  --text:#e8edf5; --muted:#6b7a96; --faint:#94a3b8;
+  --green:#10b981; --red:#f43f5e; --blue:#3b82f6;
+  --purple:#8b5cf6; --amber:#f59e0b; --cyan:#06b6d4;
+  --gold:#fbbf24; --silver:#94a3b8; --bronze:#c2845a;
+}
+html, body {
+  width:100vw; height:100vh;
+  overflow:hidden;
+  background:var(--bg); color:var(--text);
+  font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+  font-size:14px;
+}
+body { display:flex; flex-direction:column; }
+
+/* ── TICKER ── */
+#ticker {
+  height:36px; flex-shrink:0;
+  background:linear-gradient(90deg,rgba(6,182,212,.12),rgba(139,92,246,.12));
+  border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 18px; gap:14px; overflow:hidden;
+}
+.tick-label {
+  font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+  color:var(--cyan); white-space:nowrap;
+  border-right:1px solid var(--border); padding-right:14px;
+}
+#tick-text { font-size:12px; color:var(--faint); transition:opacity .4s; }
+#tick-text.fade { opacity:0; }
+
+/* ── HEADER ── */
+#header {
+  height:58px; flex-shrink:0;
+  display:flex; align-items:center; gap:14px; padding:0 16px;
+  background:var(--s1); border-bottom:1px solid var(--border);
+}
+.logo { display:flex; align-items:center; gap:10px; white-space:nowrap; }
+.logo-icon {
+  width:36px; height:36px; border-radius:9px; font-size:18px;
+  background:linear-gradient(135deg,#06b6d4,#8b5cf6);
+  display:flex; align-items:center; justify-content:center;
+}
+.logo-name {
+  font-size:16px; font-weight:800;
+  background:linear-gradient(135deg,#06b6d4,#8b5cf6);
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.logo-sub { font-size:10px; color:var(--muted); letter-spacing:.5px; }
+
+#answers { display:flex; gap:10px; flex:1; overflow:hidden; }
+.ans {
+  flex:1; background:var(--card); border:1px solid var(--border);
+  border-radius:9px; padding:7px 12px;
+  display:flex; align-items:center; gap:10px;
+  cursor:pointer; transition:all .2s; position:relative; overflow:hidden;
+}
+.ans:hover { border-color:var(--ac,var(--cyan)); background:rgba(255,255,255,.07); }
+.ans::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--ac,var(--cyan)); }
+.ans-icon { font-size:18px; }
+.ans-q { font-size:10px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+.ans-city { font-size:14px; font-weight:800; color:var(--ac,var(--text)); line-height:1.2; }
+.ans-val { font-size:11px; color:var(--faint); margin-top:1px; }
+
+.live-wrap {
+  display:flex; align-items:center; gap:8px; white-space:nowrap;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:20px; padding:5px 12px;
+}
+.dot { width:7px; height:7px; border-radius:50%; background:var(--green); }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.2} }
+.dot { animation:blink 1.5s infinite; }
+.live-wrap span { font-size:11px; color:var(--muted); }
+.live-wrap strong { font-size:11px; color:var(--green); }
+#clock { font-size:11px; color:var(--muted); }
+
+/* ── MAIN ── */
+#main { display:flex; flex:1; overflow:hidden; min-height:0; }
+#map { flex:1; min-width:0; background:#040d1a; }
+
+/* ── RIGHT PANEL ── */
+#panel {
+  width:360px; flex-shrink:0;
+  display:flex; flex-direction:column;
+  background:var(--s1); border-left:1px solid var(--border); overflow:hidden;
+}
+#mode-bar { display:flex; border-bottom:1px solid var(--border); flex-shrink:0; }
+.mbt {
+  flex:1; padding:11px 4px; text-align:center;
+  font-size:11px; font-weight:700; letter-spacing:.3px;
+  cursor:pointer; color:var(--muted); border:none; background:none;
+  border-bottom:2px solid transparent; transition:all .2s;
+}
+.mbt.on { color:var(--mc,var(--cyan)); border-bottom-color:var(--mc,var(--cyan)); background:rgba(255,255,255,.03); }
+
+#ph { padding:12px 16px 10px; border-bottom:1px solid var(--border); flex-shrink:0; }
+#ph-title { font-size:12px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.8px; margin-bottom:3px; }
+#ph-sub { font-size:11px; color:var(--muted); }
+#ph-crumb { font-size:11px; color:var(--muted); margin-top:4px; display:none; }
+.crumb-link { color:var(--cyan); cursor:pointer; }
+.crumb-link:hover { text-decoration:underline; }
+
+#psearch { padding:10px 14px; border-bottom:1px solid var(--border); flex-shrink:0; }
+#si {
+  width:100%; background:var(--s2); border:1px solid var(--border);
+  border-radius:7px; padding:8px 12px; color:var(--text); font-size:12px; outline:none;
+}
+#si:focus { border-color:var(--cyan); }
+#si::placeholder { color:var(--muted); }
+
+#pc { flex:1; overflow-y:auto; }
+#pc::-webkit-scrollbar { width:4px; }
+#pc::-webkit-scrollbar-thumb { background:var(--border); border-radius:2px; }
+
+/* ── RANK LIST ── */
+.rk-item {
+  display:flex; align-items:center; gap:12px; padding:11px 16px;
+  border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s;
+}
+.rk-item:hover, .rk-item.on { background:rgba(255,255,255,.04); }
+.rk-num {
+  width:28px; height:28px; border-radius:50%; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:800;
+}
+.rk-1 { background:rgba(251,191,36,.15); color:var(--gold); border:1px solid rgba(251,191,36,.3); }
+.rk-2 { background:rgba(148,163,184,.12); color:var(--silver); border:1px solid rgba(148,163,184,.25); }
+.rk-3 { background:rgba(194,132,90,.15); color:var(--bronze); border:1px solid rgba(194,132,90,.3); }
+.rk-n { background:var(--card); color:var(--muted); border:1px solid var(--border); }
+.rk-body { flex:1; min-width:0; }
+.rk-name { font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.rk-state { font-size:11px; color:var(--muted); }
+.rk-bar { height:2px; border-radius:1px; margin-top:5px; opacity:.6; }
+.rk-right { text-align:right; flex-shrink:0; }
+.rk-val { font-size:16px; font-weight:800; }
+.rk-sub { font-size:10px; color:var(--muted); }
+
+/* ── COMPANY CARDS ── */
+.city-header { padding:12px 16px; background:var(--s2); border-bottom:1px solid var(--border); }
+.city-h-name { font-size:16px; font-weight:800; margin-bottom:3px; }
+.city-h-state { font-size:11px; color:var(--muted); }
+.city-stats { display:flex; gap:8px; margin-top:8px; }
+.cstat { flex:1; background:var(--card); border:1px solid var(--border); border-radius:7px; padding:7px 10px; text-align:center; }
+.cstat-v { font-size:15px; font-weight:700; }
+.cstat-l { font-size:10px; color:var(--muted); }
+
+.co-item {
+  display:flex; align-items:center; gap:10px; padding:10px 16px;
+  border-bottom:1px solid var(--border); cursor:pointer; transition:background .15s;
+}
+.co-item:hover { background:rgba(255,255,255,.03); }
+.co-avatar {
+  width:34px; height:34px; border-radius:8px; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; font-weight:800;
+}
+.co-body { flex:1; min-width:0; }
+.co-name { font-size:12px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.co-meta { font-size:10px; color:var(--muted); }
+.co-right { text-align:right; flex-shrink:0; }
+.co-val { font-size:13px; font-weight:700; }
+.co-trend { font-size:10px; color:var(--muted); }
+.badge { font-size:9px; font-weight:700; padding:2px 7px; border-radius:8px; display:inline-block; margin-top:2px; }
+.badge-h { background:rgba(16,185,129,.15); color:var(--green); border:1px solid rgba(16,185,129,.2); }
+.badge-l { background:rgba(244,63,94,.15); color:var(--red); border:1px solid rgba(244,63,94,.2); }
+.badge-m { background:rgba(245,158,11,.12); color:var(--amber); border:1px solid rgba(245,158,11,.2); }
+
+/* ── SECTOR BAR ── */
+#sbar {
+  height:32px; flex-shrink:0;
+  display:flex; background:var(--s1); border-top:1px solid var(--border); overflow:hidden;
+}
+.sb-seg {
+  display:flex; align-items:center; justify-content:center;
+  font-size:10px; font-weight:700; letter-spacing:.3px; text-transform:uppercase;
+  overflow:hidden; white-space:nowrap; padding:0 8px;
+  transition:flex .5s ease; cursor:default;
+}
+.sb-seg:hover { filter:brightness(1.2); }
+
+/* ── MAP ── */
+.leaflet-container { background:#04091a !important; }
+.leaflet-tooltip {
+  background:var(--s2) !important; border:1px solid var(--b2) !important;
+  color:var(--text) !important; border-radius:9px !important;
+  padding:0 !important; box-shadow:0 8px 32px rgba(0,0,0,.6) !important;
+}
+.leaflet-tooltip-top::before { border-top-color:var(--b2) !important; }
+.leaflet-control-zoom a { background:var(--s2) !important; color:var(--text) !important; border-color:var(--border) !important; }
+
+@keyframes rise { from{opacity:0;transform:translateY(5px)} to{opacity:1;transform:none} }
+.animate { animation:rise .25s ease; }
+</style>
+</head>
+<body>
+
+<div id="ticker">
+  <div class="tick-label">💡 Live Insight</div>
+  <div id="tick-text">Loading India hiring intelligence…</div>
+</div>
+
+<div id="header">
+  <div class="logo">
+    <div class="logo-icon">🇮🇳</div>
+    <div>
+      <div class="logo-name">HireWatch India</div>
+      <div class="logo-sub">LIVE HIRING &amp; LAYOFF TRACKER</div>
+    </div>
+  </div>
+  <div id="answers">
+    <div class="ans" style="--ac:#10b981" onclick="focusAnswer('hiring')">
+      <div class="ans-icon">🏆</div>
+      <div><div class="ans-q">Most Hiring</div><div class="ans-city" id="a-h-city">—</div><div class="ans-val" id="a-h-val">—</div></div>
+    </div>
+    <div class="ans" style="--ac:#f43f5e" onclick="focusAnswer('layoffs')">
+      <div class="ans-icon">🔴</div>
+      <div><div class="ans-q">Most Layoffs</div><div class="ans-city" id="a-l-city">—</div><div class="ans-val" id="a-l-val">—</div></div>
+    </div>
+    <div class="ans" style="--ac:#3b82f6" onclick="focusAnswer('companies')">
+      <div class="ans-icon">🏢</div>
+      <div><div class="ans-q">Most Companies</div><div class="ans-city" id="a-c-city">—</div><div class="ans-val" id="a-c-val">—</div></div>
+    </div>
+    <div class="ans" style="--ac:#8b5cf6" onclick="focusAnswer('growth')">
+      <div class="ans-icon">📈</div>
+      <div><div class="ans-q">Fastest Growth</div><div class="ans-city" id="a-g-city">—</div><div class="ans-val" id="a-g-val">—</div></div>
+    </div>
+  </div>
+  <div class="live-wrap">
+    <div class="dot"></div>
+    <div><strong>LIVE</strong> <span id="clock"></span></div>
+  </div>
+</div>
+
+<div id="main">
+  <div id="map"></div>
+  <div id="panel">
+    <div id="mode-bar">
+      <button class="mbt on" style="--mc:#10b981" onclick="setMode('hiring',this)">🟢 Hiring</button>
+      <button class="mbt" style="--mc:#f43f5e" onclick="setMode('layoffs',this)">🔴 Layoffs</button>
+      <button class="mbt" style="--mc:#3b82f6" onclick="setMode('companies',this)">🏢 Companies</button>
+      <button class="mbt" style="--mc:#8b5cf6" onclick="setMode('growth',this)">📈 Growth</button>
+    </div>
+    <div id="ph">
+      <div id="ph-title">Top Cities by Hiring</div>
+      <div id="ph-sub">Click any city bubble on the map</div>
+      <div id="ph-crumb"></div>
+    </div>
+    <div id="psearch">
+      <input id="si" type="text" placeholder="🔍  Search city or company…" oninput="doSearch(this.value)"/>
+    </div>
+    <div id="pc"></div>
+  </div>
+</div>
+
+<div id="sbar"></div>
+
+<script>
+// ── Config ──────────────────────────────────────────────────────
+const MODE = {
+  hiring:    {color:'#10b981', label:'Hiring',    unit:'open roles',  icon:'🟢'},
+  layoffs:   {color:'#f43f5e', label:'Layoffs',   unit:'affected',    icon:'🔴'},
+  companies: {color:'#3b82f6', label:'Companies', unit:'tracked',     icon:'🏢'},
+  growth:    {color:'#8b5cf6', label:'Growth',    unit:'score',       icon:'📈'},
+};
+
+const INSIGHTS = [
+  '🔥 Bengaluru leads India — 2,841 active roles this week',
+  '📈 Hyderabad fastest growing tech hub +38 growth score',
+  '⚠️ Delhi reports most layoffs — 1,600 affected this month',
+  '🏆 IT sector hiring 18% more than last month nationally',
+  '💡 Pune & Chennai healthiest markets — <5% layoff rate',
+  '📍 Mumbai finance sector adding record banking roles',
+  '🔴 TCS, IBM, Amazon India layoffs dominate news signals',
+  '✅ Cognizant, Wipro, Netflix Hyderabad all actively hiring',
+];
+
+const COMPANIES = {
+  Bengaluru:[
+    {name:'Infosys',sector:'IT Services',size:'250K emp',status:'hiring',val:3200,trend:'+18%',founded:1981},
+    {name:'Wipro',sector:'IT Services',size:'180K emp',status:'hiring',val:2100,trend:'+9%',founded:1945},
+    {name:'Flipkart',sector:'E-Commerce',size:'30K emp',status:'mixed',val:450,trend:'±',founded:2007},
+    {name:'Swiggy',sector:'Food Tech',size:'10K emp',status:'mixed',val:230,trend:'↓',founded:2014},
+    {name:'Razorpay',sector:'Fintech',size:'5K emp',status:'hiring',val:180,trend:'+14%',founded:2014},
+    {name:'Meesho',sector:'Social Commerce',size:'4K emp',status:'hiring',val:280,trend:'+15%',founded:2015},
+  ],
+  Mumbai:[
+    {name:'TCS',sector:'IT Services',size:'600K emp',status:'layoff',val:12000,trend:'-8%',founded:1968},
+    {name:'HDFC Bank',sector:'Banking',size:'70K emp',status:'hiring',val:1200,trend:'+15%',founded:1994},
+    {name:'Zomato',sector:'Food Tech',size:'12K emp',status:'mixed',val:320,trend:'±',founded:2008},
+    {name:'Nykaa',sector:'E-Commerce',size:'3K emp',status:'hiring',val:320,trend:'+12%',founded:2012},
+  ],
+  Hyderabad:[
+    {name:'Microsoft India',sector:'IT',size:'15K emp',status:'hiring',val:890,trend:'+14%',founded:1990},
+    {name:'Google India',sector:'IT',size:'8K emp',status:'hiring',val:456,trend:'+10%',founded:2004},
+    {name:'Netflix India',sector:'Media',size:'500 emp',status:'hiring',val:300,trend:'+25%',founded:2016},
+    {name:'Amazon India',sector:'E-Commerce',size:'70K emp',status:'layoff',val:800,trend:'-12%',founded:1994},
+  ],
+  Chennai:[
+    {name:'HCL Technologies',sector:'IT Services',size:'220K emp',status:'hiring',val:1800,trend:'+11%',founded:1976},
+    {name:'Zoho Corporation',sector:'IT Products',size:'12K emp',status:'hiring',val:890,trend:'+22%',founded:1996},
+    {name:'Freshworks',sector:'SaaS',size:'5K emp',status:'hiring',val:340,trend:'+18%',founded:2010},
+  ],
+  Delhi:[
+    {name:'Paytm',sector:'Fintech',size:'8K emp',status:'layoff',val:450,trend:'-28%',founded:2010},
+    {name:'IndiGo',sector:'Aviation',size:'30K emp',status:'hiring',val:1200,trend:'+18%',founded:2006},
+    {name:'MakeMyTrip',sector:'Travel',size:'4K emp',status:'mixed',val:230,trend:'±',founded:2000},
+  ],
+  Pune:[
+    {name:'Tech Mahindra',sector:'IT Services',size:'160K emp',status:'hiring',val:1100,trend:'+8%',founded:1986},
+    {name:'Persistent Systems',sector:'IT',size:'22K emp',status:'hiring',val:680,trend:'+16%',founded:1990},
+    {name:'Bajaj Auto',sector:'Manufacturing',size:'20K emp',status:'hiring',val:560,trend:'+5%',founded:1945},
+  ],
+  Kolkata:[
+    {name:'ITC Limited',sector:'FMCG',size:'30K emp',status:'hiring',val:678,trend:'+8%',founded:1910},
+    {name:'Coal India',sector:'Mining',size:'250K emp',status:'mixed',val:450,trend:'±',founded:1975},
+  ],
+  Ahmedabad:[
+    {name:'Adani Group',sector:'Infrastructure',size:'25K emp',status:'hiring',val:1200,trend:'+14%',founded:1988},
+    {name:'Torrent Pharma',sector:'Pharma',size:'8K emp',status:'hiring',val:456,trend:'+9%',founded:1959},
+  ],
+  Jaipur:[
+    {name:'Jaipur Rugs',sector:'Textiles',size:'4K emp',status:'hiring',val:120,trend:'+5%',founded:1978},
+    {name:'Infosys BPO Jaipur',sector:'IT Services',size:'3K emp',status:'mixed',val:80,trend:'±',founded:2004},
+  ],
+  Kochi:[
+    {name:'UST Global',sector:'IT Services',size:'8K emp',status:'hiring',val:345,trend:'+12%',founded:1999},
+  ],
+};
+
+// ── State ────────────────────────────────────────────────────────
+let DISTRICTS = [];
+let curMode   = 'hiring';
+let curCity   = null;
+
+// ── Map ──────────────────────────────────────────────────────────
+const map = L.map('map', {center:[20.5937,78.9629], zoom:5, attributionControl:false});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {maxZoom:19}).addTo(map);
+let markerLayer = L.layerGroup().addTo(map);
+
+// ── Load data ────────────────────────────────────────────────────
+fetch('data/india_summary.json')
+  .then(r => r.json())
+  .then(d => init(d.districts || []))
+  .catch(() => init([]));
+
+function init(raw) {
+  DISTRICTS = raw
+    .filter(d => d.city)
+    .map(d => ({
+      id:       d.city.toLowerCase().replace(/ /g,'_'),
+      name:     d.city,
+      state:    '',
+      lat:      d.lat,
+      lng:      d.lng,
+      hiring:   d.total_hiring   || 0,
+      layoffs:  d.total_layoffs  || 0,
+      companies:d.total_companies|| 0,
+      growth:   d.growth_score   || 0,
+      sentiment:d.avg_sentiment  || 0,
+    }));
+
+  // rank all modes
+  ['hiring','layoffs','companies','growth'].forEach(m => {
+    [...DISTRICTS].sort((a,b) => b[m]-a[m]).forEach((d,i) => { d['r_'+m] = i+1; });
+  });
+
+  updateAnswerCards();
+  buildMarkers('hiring');
+  renderRankings('hiring');
+  buildSectorBar();
+  document.getElementById('tick-text').textContent = INSIGHTS[0];
+}
+
+// ── Markers ──────────────────────────────────────────────────────
+function buildMarkers(mode) {
+  markerLayer.clearLayers();
+  DISTRICTS.forEach(d => {
+    const cfg  = MODE[mode];
+    const vals = DISTRICTS.map(x => x[mode]);
+    const maxV = Math.max(...vals), minV = Math.min(...vals);
+    const t    = maxV === minV ? .5 : (d[mode]-minV)/(maxV-minV);
+    const sz   = Math.round(18 + t * 50);
+    const rank = d['r_'+mode];
+    const c    = cfg.color;
+    const glow = rank <= 3 ? `box-shadow:0 0 ${sz/2}px ${c}66;` : '';
+    const nc   = rank===1?'#fbbf24':rank===2?'#94a3b8':rank===3?'#c2845a':c;
+    const nStyle = `font-size:${Math.max(9,Math.round(sz*.32))}px;font-weight:900;color:${nc};`;
+    const badge  = rank<=10 ? `<span style="${nStyle}">${rank}</span>` : '';
+    const fire   = rank===1 ? `<div style="position:absolute;top:-9px;right:-7px;font-size:14px;">🔥</div>` : '';
+
+    const icon = L.divIcon({
+      className:'',
+      html:`<div style="width:${sz}px;height:${sz}px;background:${c}22;border:2px solid ${c}88;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;${glow}position:relative;">${badge}${fire}</div>`,
+      iconSize:[sz,sz], iconAnchor:[sz/2,sz/2]
+    });
+
+    const val = mode==='growth' ? `+${d[mode].toFixed(1)}` : d[mode].toLocaleString();
+    const tt  = `<div style="background:#0c1a30;border:1px solid rgba(255,255,255,.14);border-radius:10px;padding:12px 16px;min-width:190px;">
+      <div style="font-weight:800;font-size:14px;margin-bottom:4px;">${d.name}</div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:12px;color:#94a3b8;">${cfg.icon} ${cfg.label}</span>
+        <span style="font-size:15px;font-weight:800;color:${c};">${val}</span>
+      </div>
+      <div style="display:flex;gap:12px;padding-top:6px;border-top:1px solid rgba(255,255,255,.07);">
+        <span style="font-size:11px;color:#10b981;">▲ ${d.hiring.toLocaleString()}</span>
+        <span style="font-size:11px;color:#f43f5e;">▼ ${d.layoffs.toLocaleString()}</span>
+        <span style="font-size:11px;color:#3b82f6;">🏢 ${d.companies}</span>
+      </div>
+      <div style="font-size:10px;color:#4a5568;margin-top:5px;">Rank #${rank} nationally</div>
+    </div>`;
+
+    L.marker([d.lat,d.lng], {icon, zIndexOffset:rank===1?1000:500-rank})
+      .bindTooltip(tt, {permanent:false, direction:'top', opacity:1})
+      .on('click', () => openCity(d.id))
+      .addTo(markerLayer);
+  });
+}
+
+// ── Panel ────────────────────────────────────────────────────────
+function renderRankings(mode, filter='') {
+  const cfg = MODE[mode];
+  document.getElementById('ph-title').textContent = `Top Cities by ${cfg.label}`;
+  document.getElementById('ph-sub').textContent   = 'Click any city bubble on the map';
+  document.getElementById('ph-crumb').style.display = 'none';
+
+  let list = filter
+    ? DISTRICTS.filter(d => d.name.toLowerCase().includes(filter.toLowerCase()))
+    : [...DISTRICTS].sort((a,b) => b[mode]-a[mode]).slice(0,12);
+
+  const maxV = Math.max(...list.map(d => d[mode]));
+  document.getElementById('pc').innerHTML = '<div class="animate">' +
+    list.map((d,i) => {
+      const rank = filter ? d['r_'+mode] : i+1;
+      const nc   = rank===1?'rk-1':rank===2?'rk-2':rank===3?'rk-3':'rk-n';
+      const val  = mode==='growth' ? `+${d[mode].toFixed(1)}` : d[mode].toLocaleString();
+      const bp   = maxV ? Math.round(d[mode]/maxV*100) : 0;
+      return `<div class="rk-item${curCity===d.id?' on':''}" onclick="openCity('${d.id}')" style="--mc:${cfg.color}">
+        <div class="rk-num ${nc}">${rank}</div>
+        <div class="rk-body">
+          <div class="rk-name">${d.name}</div>
+          <div class="rk-bar" style="width:${bp}%;background:${cfg.color};"></div>
+        </div>
+        <div class="rk-right">
+          <div class="rk-val" style="color:${cfg.color}">${val}</div>
+          <div class="rk-sub">${cfg.unit}</div>
+        </div>
+      </div>`;
+    }).join('') + '</div>';
+}
+
+function openCity(id) {
+  curCity = id;
+  const d = DISTRICTS.find(x => x.id===id);
+  if (!d) return;
+  map.flyTo([d.lat,d.lng], 9, {duration:.8});
+
+  document.getElementById('ph-title').textContent = d.name;
+  document.getElementById('ph-sub').textContent   = 'Company signals';
+  const crumb = document.getElementById('ph-crumb');
+  crumb.style.display = 'block';
+  crumb.innerHTML = `<span class="crumb-link" onclick="goBack()">← All Cities</span>`;
+
+  const cos    = COMPANIES[d.name] || [];
+  const header = `<div class="city-header">
+    <div class="city-h-name">${d.name}</div>
+    <div class="city-h-state">Live signals from news + scrapers</div>
+    <div class="city-stats">
+      <div class="cstat"><div class="cstat-v" style="color:var(--green)">${d.hiring.toLocaleString()}</div><div class="cstat-l">Hiring</div></div>
+      <div class="cstat"><div class="cstat-v" style="color:var(--red)">${d.layoffs.toLocaleString()}</div><div class="cstat-l">Layoffs</div></div>
+      <div class="cstat"><div class="cstat-v" style="color:var(--blue)">${d.companies}</div><div class="cstat-l">Companies</div></div>
+      <div class="cstat"><div class="cstat-v" style="color:var(--purple)">+${d.growth.toFixed(1)}</div><div class="cstat-l">Growth</div></div>
+    </div>
+  </div>`;
+
+  const coHtml = cos.length ? cos.map(c => {
+    const isH=c.status==='hiring', isL=c.status==='layoff';
+    const bc=isH?'badge-h':isL?'badge-l':'badge-m';
+    const bl=isH?'Hiring':isL?'Layoff':'Mixed';
+    const vc=isH?'var(--green)':isL?'var(--red)':'var(--amber)';
+    const vt=isH?`+${c.val.toLocaleString()}`:isL?`-${c.val.toLocaleString()}`:c.trend;
+    const col=avatarColor(c.name);
+    const ini=c.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    return `<div class="co-item">
+      <div class="co-avatar" style="background:${col}22;color:${col};">${ini}</div>
+      <div class="co-body">
+        <div class="co-name">${c.name}</div>
+        <div class="co-meta">${c.sector} · ${c.size}</div>
+        <span class="badge ${bc}">${bl}</span>
+      </div>
+      <div class="co-right">
+        <div class="co-val" style="color:${vc}">${vt}</div>
+        <div class="co-trend">${c.trend}</div>
+      </div>
+    </div>`;
+  }).join('') : `<div style="padding:24px;text-align:center;color:var(--muted);font-size:12px;">No company data yet.<br>Run the pipeline to populate.</div>`;
+
+  document.getElementById('pc').innerHTML = `<div class="animate">${header}${coHtml}</div>`;
+  document.getElementById('si').value = '';
+}
+
+function goBack() {
+  curCity = null;
+  map.flyTo([20.5937,78.9629], 5, {duration:.8});
+  renderRankings(curMode);
+}
+
+function setMode(mode, btn) {
+  curMode = mode; curCity = null;
+  document.querySelectorAll('.mbt').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  buildMarkers(mode);
+  renderRankings(mode);
+  document.getElementById('si').value = '';
+}
+
+function focusAnswer(mode) {
+  const btn = document.querySelector(`.mbt:nth-child(${['hiring','layoffs','companies','growth'].indexOf(mode)+1})`);
+  setMode(mode, btn);
+}
+
+function doSearch(q) {
+  if (!q) { renderRankings(curMode); return; }
+  renderRankings(curMode, q);
+}
+
+function avatarColor(name) {
+  const p=['#06b6d4','#8b5cf6','#10b981','#f59e0b','#3b82f6','#ec4899','#f43f5e','#84cc16'];
+  let h=0; for(let c of name) h=(h*31+c.charCodeAt(0))%p.length;
+  return p[h];
+}
+
+function updateAnswerCards() {
+  if (!DISTRICTS.length) return;
+  const sH=[...DISTRICTS].sort((a,b)=>b.hiring-a.hiring)[0];
+  const sL=[...DISTRICTS].sort((a,b)=>b.layoffs-a.layoffs)[0];
+  const sC=[...DISTRICTS].sort((a,b)=>b.companies-a.companies)[0];
+  const sG=[...DISTRICTS].sort((a,b)=>b.growth-a.growth)[0];
+  document.getElementById('a-h-city').textContent = sH.name;
+  document.getElementById('a-h-val').textContent  = `${sH.hiring.toLocaleString()} roles`;
+  document.getElementById('a-l-city').textContent = sL.name;
+  document.getElementById('a-l-val').textContent  = `${sL.layoffs.toLocaleString()} affected`;
+  document.getElementById('a-c-city').textContent = sC.name;
+  document.getElementById('a-c-val').textContent  = `${sC.companies} companies`;
+  document.getElementById('a-g-city').textContent = sG.name;
+  document.getElementById('a-g-val').textContent  = `+${sG.growth.toFixed(1)} score`;
+}
+
+function buildSectorBar() {
+  const segs=[
+    {l:'IT/Tech',p:38,c:'#10b981'},{l:'Finance',p:14,c:'#3b82f6'},
+    {l:'Mfg',p:19,c:'#f59e0b'},{l:'E-Comm',p:10,c:'#8b5cf6'},
+    {l:'Health',p:6,c:'#ec4899'},{l:'Fintech',p:7,c:'#84cc16'},
+    {l:'EdTech▼',p:6,c:'#f43f5e'},
+  ];
+  document.getElementById('sbar').innerHTML = segs.map(s =>
+    `<div class="sb-seg" style="flex:${s.p};background:${s.c}18;color:${s.c};border-right:1px solid var(--border);" title="${s.l}: ${s.p}%">${s.p>8?s.l:''}</div>`
+  ).join('');
+}
+
+let tickIdx = 0;
+function rotateTicker() {
+  const el = document.getElementById('tick-text');
+  el.classList.add('fade');
+  setTimeout(() => {
+    tickIdx = (tickIdx+1) % INSIGHTS.length;
+    el.textContent = INSIGHTS[tickIdx];
+    el.classList.remove('fade');
+  }, 400);
+}
+
+function updateClock() {
+  const n = new Date();
+  document.getElementById('clock').textContent =
+    String(n.getHours()).padStart(2,'0') + ':' +
+    String(n.getMinutes()).padStart(2,'0') + ':' +
+    String(n.getSeconds()).padStart(2,'0');
+}
+
+setInterval(updateClock, 1000);
+setInterval(rotateTicker, 5000);
+updateClock();
+</script>
+</body>
+</html>

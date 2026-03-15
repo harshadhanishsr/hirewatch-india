@@ -1,0 +1,953 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>HireWatch India — Full Stack Architecture Proposal</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#030712;--s1:#060f20;--s2:#0a1628;--card:rgba(255,255,255,.04);
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --text:#e2e8f0;--muted:#64748b;--faint:#94a3b8;
+  --amber:#f59e0b;--blue:#3b82f6;--purple:#8b5cf6;
+  --pink:#ec4899;--cyan:#06b6d4;--green:#10b981;--red:#f43f5e;
+}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;line-height:1.6;}
+
+/* ── SHARED ── */
+.max{max-width:1320px;margin:0 auto;padding:0 24px;}
+.tag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;
+     padding:3px 10px;border-radius:20px;border:1px solid currentColor;}
+.grad{background:linear-gradient(135deg,var(--cyan),var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.section-label{font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+h2{font-size:32px;font-weight:800;margin-bottom:10px;}
+h3{font-size:18px;font-weight:700;}
+section{padding:80px 0;}
+section:nth-child(even){background:var(--s1);}
+
+/* ── HERO ── */
+#hero{
+  background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(6,182,212,.08) 0%,transparent 70%),var(--bg);
+  padding:100px 0 80px;text-align:center;border-bottom:1px solid var(--border);
+}
+#hero h1{font-size:52px;font-weight:900;line-height:1.1;margin-bottom:18px;}
+#hero p{font-size:18px;color:var(--faint);max-width:680px;margin:0 auto 32px;}
+.hero-badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;}
+.hbadge{
+  background:var(--card);border:1px solid var(--border2);border-radius:20px;
+  padding:6px 16px;font-size:12px;font-weight:600;
+}
+
+/* ── ARCHITECTURE PIPELINE ── */
+#arch{padding:80px 0;}
+.pipe-stages{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding-bottom:12px;}
+.pipe-stage{
+  flex:1;min-width:160px;background:var(--card);border:1px solid var(--border);
+  border-radius:0;padding:24px 16px;position:relative;text-align:center;
+}
+.pipe-stage:first-child{border-radius:12px 0 0 12px;}
+.pipe-stage:last-child{border-radius:0 12px 12px 0;}
+.pipe-stage::after{
+  content:'→';position:absolute;right:-14px;top:50%;transform:translateY(-50%);
+  font-size:22px;color:var(--muted);z-index:2;background:var(--bg);padding:0 2px;
+}
+.pipe-stage:last-child::after{display:none;}
+.ps-icon{font-size:28px;margin-bottom:10px;display:block;}
+.ps-title{font-size:12px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px;}
+.ps-tech{font-size:10px;color:var(--muted);margin-bottom:8px;line-height:1.5;}
+.ps-tag{font-size:9px;padding:2px 7px;border-radius:8px;font-weight:600;}
+
+.stage-ingest  {border-top:3px solid var(--amber);}  .stage-ingest .ps-title{color:var(--amber);}
+.stage-raw     {border-top:3px solid var(--blue);}   .stage-raw .ps-title{color:var(--blue);}
+.stage-process {border-top:3px solid var(--purple);} .stage-process .ps-title{color:var(--purple);}
+.stage-ai      {border-top:3px solid var(--pink);}   .stage-ai .ps-title{color:var(--pink);}
+.stage-serve   {border-top:3px solid var(--cyan);}   .stage-serve .ps-title{color:var(--cyan);}
+.stage-web     {border-top:3px solid var(--green);}  .stage-web .ps-title{color:var(--green);}
+
+.arch-detail{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin-top:48px;}
+.ad-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.ad-card h4{font-size:13px;font-weight:700;margin-bottom:10px;}
+.ad-card ul{list-style:none;display:flex;flex-direction:column;gap:5px;}
+.ad-card li{font-size:12px;color:var(--faint);padding-left:14px;position:relative;}
+.ad-card li::before{content:'▸';position:absolute;left:0;color:var(--cyan);}
+
+/* ── AI MODELS ── */
+#aimodels .ai-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:32px;}
+.ai-card{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;padding:22px;
+  transition:border-color .2s,transform .2s;
+}
+.ai-card:hover{border-color:var(--pink);transform:translateY(-2px);}
+.ai-icon{font-size:32px;margin-bottom:12px;}
+.ai-card h4{font-size:14px;font-weight:700;margin-bottom:6px;}
+.ai-card p{font-size:12px;color:var(--faint);margin-bottom:12px;}
+.ai-output{font-size:11px;background:rgba(236,72,153,.1);border:1px solid rgba(236,72,153,.2);
+           color:#f472b6;border-radius:6px;padding:6px 10px;}
+
+/* ── DASHBOARD CONCEPTS ── */
+#concepts{background:var(--s1);}
+.concepts-intro{margin-bottom:40px;}
+.concepts-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+.concepts-grid .concept-card:last-child:nth-child(odd){grid-column:1/-1;}
+.concept-card{
+  background:var(--card);border:2px solid var(--border);border-radius:16px;
+  padding:0;overflow:hidden;cursor:pointer;transition:all .25s;
+}
+.concept-card:hover{border-color:var(--cyan);transform:translateY(-3px);
+  box-shadow:0 20px 60px rgba(6,182,212,.12);}
+.concept-card.selected{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(6,182,212,.2);}
+.concept-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);}
+.cn-num{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:1px;}
+.cn-name{font-size:18px;font-weight:800;margin:2px 0 4px;}
+.cn-line{font-size:12px;color:var(--faint);}
+.cn-badges{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;}
+.concept-preview{
+  background:#0a0f1e;padding:12px;border-bottom:1px solid var(--border);
+  min-height:170px;position:relative;overflow:hidden;
+}
+.concept-body{padding:16px 20px;}
+.cb-section{margin-bottom:12px;}
+.cb-section h5{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);margin-bottom:5px;}
+.cb-section p{font-size:12px;color:var(--faint);}
+.pros-cons{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.pro-item,.con-item{font-size:11px;padding:3px 0;}
+.pro-item{color:var(--green);}
+.pro-item::before{content:'✓  ';}
+.con-item{color:var(--red);}
+.con-item::before{content:'✗  ';}
+.choose-btn{
+  width:calc(100% - 32px);margin:0 16px 16px;padding:10px;border-radius:8px;
+  border:1px solid var(--border2);background:transparent;color:var(--text);
+  font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;
+}
+.choose-btn:hover,.concept-card.selected .choose-btn{
+  background:linear-gradient(135deg,var(--cyan),var(--purple));
+  border-color:transparent;color:#fff;
+}
+.concept-card.selected .choose-btn::after{content:' ✓';}
+
+/* MOCK PREVIEWS */
+.mock{font-size:9px;font-family:monospace;color:#4a5568;user-select:none;}
+
+/* Preview 1: GeoIntelligence */
+.p1-layout{display:flex;height:148px;gap:6px;}
+.p1-map{flex:1;background:#0d1b2a;border:1px solid #1e2d3d;border-radius:6px;
+        display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;}
+.p1-map::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(circle at 45% 55%,rgba(34,197,94,.15) 0%,transparent 55%),
+             radial-gradient(circle at 65% 35%,rgba(6,182,212,.1) 0%,transparent 40%);}
+.map-dot{position:absolute;border-radius:50%;border:1.5px solid;display:flex;align-items:center;justify-content:center;}
+.p1-panel{width:110px;display:flex;flex-direction:column;gap:4px;}
+.mini-card{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:5px;padding:6px 8px;}
+.mini-val{font-size:11px;font-weight:700;}
+.mini-lbl{font-size:8px;color:var(--muted);}
+
+/* Preview 2: Command Center */
+.p2-layout{display:flex;height:148px;gap:5px;}
+.p2-feed{width:90px;background:#0a0f1e;border:1px solid #1e2d3d;border-radius:5px;padding:6px;overflow:hidden;}
+.feed-item{border-left:2px solid;padding:3px 5px;margin-bottom:4px;border-radius:0 3px 3px 0;background:rgba(255,255,255,.03);}
+.feed-item .fi-co{font-size:9px;font-weight:700;white-space:nowrap;overflow:hidden;}
+.feed-item .fi-num{font-size:8px;color:var(--muted);}
+.p2-charts{flex:1;display:flex;flex-direction:column;gap:4px;}
+.mini-chart{flex:1;background:#0a0f1e;border:1px solid #1e2d3d;border-radius:5px;padding:6px;position:relative;overflow:hidden;}
+.chart-bar{position:absolute;bottom:0;background:rgba(16,185,129,.5);border-radius:2px 2px 0 0;}
+.p2-map{width:80px;background:#0d1b2a;border:1px solid #1e2d3d;border-radius:5px;}
+
+/* Preview 3: Market Intelligence */
+.p3-layout{height:148px;overflow:hidden;}
+.p3-filters{display:flex;gap:4px;margin-bottom:6px;}
+.p3-chip{background:#1e2d3d;border-radius:10px;padding:2px 8px;font-size:9px;color:#6b7280;}
+.p3-chip.on{background:rgba(6,182,212,.15);color:var(--cyan);}
+.p3-table{border:1px solid #1e2d3d;border-radius:5px;overflow:hidden;}
+.p3-thead{display:grid;grid-template-columns:1.4fr .8fr .7fr .7fr .7fr .6fr;
+          background:#111827;padding:5px 8px;gap:4px;}
+.p3-row{display:grid;grid-template-columns:1.4fr .8fr .7fr .7fr .7fr .6fr;
+        padding:5px 8px;gap:4px;border-top:1px solid rgba(255,255,255,.04);}
+.p3-row:hover{background:rgba(255,255,255,.03);}
+.th{font-size:8px;color:var(--muted);font-weight:700;text-transform:uppercase;}
+.td{font-size:9px;color:var(--faint);}
+.td.green{color:var(--green);font-weight:700;}
+.td.red{color:var(--red);font-weight:700;}
+.td.name{color:var(--text);}
+
+/* Preview 4: Editorial */
+.p4-layout{height:148px;overflow:hidden;padding:8px;}
+.p4-date{font-size:9px;color:var(--muted);margin-bottom:6px;letter-spacing:1px;text-transform:uppercase;}
+.p4-headline{font-size:13px;font-weight:800;margin-bottom:8px;line-height:1.3;color:var(--text);}
+.p4-summary{font-size:10px;color:var(--faint);margin-bottom:8px;line-height:1.4;}
+.p4-charts-row{display:flex;gap:6px;}
+.p4-stat{flex:1;background:#0d1b2a;border-radius:5px;padding:7px;text-align:center;}
+.p4-stat-val{font-size:15px;font-weight:800;}
+.p4-stat-lbl{font-size:8px;color:var(--muted);}
+.scroll-dots{display:flex;gap:3px;margin-top:8px;justify-content:center;}
+.sdot{width:4px;height:4px;border-radius:50%;background:var(--muted);}
+.sdot.on{background:var(--cyan);width:12px;border-radius:3px;}
+
+/* Preview 5: API + Widget Hub */
+.p5-layout{display:flex;height:148px;gap:6px;}
+.p5-left{flex:1;background:#0a0f1e;border:1px solid #1e2d3d;border-radius:5px;padding:8px;overflow:hidden;}
+.api-line{display:flex;gap:5px;align-items:center;margin-bottom:5px;}
+.api-method{font-size:8px;font-weight:700;padding:1px 5px;border-radius:3px;font-family:monospace;}
+.get{background:rgba(16,185,129,.2);color:var(--green);}
+.api-path{font-size:9px;font-family:monospace;color:#93c5fd;}
+.p5-right{width:110px;display:flex;flex-direction:column;gap:5px;}
+.widget-preview{flex:1;background:#0d1b2a;border:1px solid #1e2d3d;border-radius:5px;
+                padding:6px;display:flex;align-items:center;justify-content:center;}
+
+/* ── HOSTING ── */
+#hosting .h-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:32px;}
+.h-card{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;
+  transition:border-color .2s;
+}
+.h-card.recommended{border-color:var(--cyan);}
+.h-card h4{font-size:14px;font-weight:700;margin-bottom:6px;}
+.h-card .h-cost{font-size:22px;font-weight:800;color:var(--cyan);margin-bottom:12px;}
+.h-card .h-cost span{font-size:12px;font-weight:400;color:var(--muted);}
+.h-item{font-size:12px;color:var(--faint);margin-bottom:5px;padding-left:14px;position:relative;}
+.h-item::before{content:'▸';position:absolute;left:0;color:var(--muted);}
+.rec-badge{background:rgba(6,182,212,.15);border:1px solid rgba(6,182,212,.3);
+           color:var(--cyan);font-size:9px;font-weight:700;padding:2px 8px;border-radius:10px;
+           display:inline-block;margin-bottom:10px;}
+
+/* ── SCHEDULE ── */
+#schedule .sched-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;margin-top:32px;}
+.sched-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;}
+.sched-icon{font-size:28px;margin-bottom:10px;}
+.sched-card h4{font-size:14px;font-weight:700;margin-bottom:6px;}
+.sched-card p{font-size:12px;color:var(--faint);}
+.sched-pill{display:inline-block;margin-top:10px;font-size:11px;font-weight:600;
+            padding:4px 12px;border-radius:10px;background:rgba(16,185,129,.1);
+            border:1px solid rgba(16,185,129,.2);color:var(--green);}
+
+/* ── COST TABLE ── */
+.cost-table{width:100%;border-collapse:collapse;margin-top:32px;font-size:13px;}
+.cost-table th{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border);
+               font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);}
+.cost-table td{padding:10px 14px;border-bottom:1px solid var(--border);color:var(--faint);}
+.cost-table tr:last-child td{border-bottom:none;font-weight:700;color:var(--text);}
+.cost-table td:first-child{color:var(--text);}
+
+/* ── SELECTION RESULT ── */
+#selection-result{
+  display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,#0a2538,#1a0a38);
+  border:1px solid var(--cyan);border-radius:12px;padding:16px 28px;
+  box-shadow:0 20px 60px rgba(0,0,0,.8);z-index:999;min-width:360px;text-align:center;
+}
+#selection-result h4{font-size:14px;font-weight:700;color:var(--cyan);margin-bottom:4px;}
+#selection-result p{font-size:12px;color:var(--faint);}
+
+/* ── FOOTER ── */
+footer{background:#020811;border-top:1px solid var(--border);padding:32px 0;text-align:center;}
+footer p{font-size:13px;color:var(--muted);}
+</style>
+</head>
+<body>
+
+<!-- ════════════ HERO ════════════ -->
+<section id="hero">
+<div class="max">
+  <div class="section-label">Full Stack Architecture Proposal</div>
+  <h1><span class="grad">HireWatch India</span><br/>End-to-End Data Engineering &amp; Analytics Platform</h1>
+  <p>A production-grade pipeline ingesting India's hiring &amp; layoff data from multiple sources — processed in Databricks, enriched with AI, served publicly at scale.</p>
+  <div class="hero-badges">
+    <div class="hbadge" style="color:var(--amber)">⚡ AWS Lambda + S3</div>
+    <div class="hbadge" style="color:var(--purple)">⚙️ Databricks + Delta Lake</div>
+    <div class="hbadge" style="color:var(--pink)">🤖 AI / NLP / Forecasting</div>
+    <div class="hbadge" style="color:var(--cyan)">🌍 CloudFront CDN</div>
+    <div class="hbadge" style="color:var(--green)">🔓 Public Access</div>
+    <div class="hbadge" style="color:var(--blue)">⏱️ Hourly Batch</div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════ ARCHITECTURE ════════════ -->
+<section id="arch">
+<div class="max">
+  <div class="section-label">System Architecture</div>
+  <h2>The <span class="grad">Full Pipeline</span></h2>
+  <p style="color:var(--faint);margin-bottom:36px;">Data flows from raw scraping through transformation, AI enrichment, and out to a globally-served public dashboard — fully automated.</p>
+
+  <div class="pipe-stages">
+    <div class="pipe-stage stage-ingest">
+      <span class="ps-icon">⚡</span>
+      <div class="ps-title">Ingest</div>
+      <div class="ps-tech">AWS Lambda<br/>EventBridge Scheduler<br/>Naukri · LinkedIn · EPFO<br/>News APIs · MCA21</div>
+      <span class="ps-tag" style="background:rgba(245,158,11,.1);color:var(--amber);">Hourly trigger</span>
+    </div>
+    <div class="pipe-stage stage-raw">
+      <span class="ps-icon">🗄️</span>
+      <div class="ps-title">Bronze (Raw)</div>
+      <div class="ps-tech">AWS S3<br/>Partitioned JSON/Parquet<br/>source / YYYY / MM / DD / HH<br/>Append-only · Never overwrite</div>
+      <span class="ps-tag" style="background:rgba(59,130,246,.1);color:var(--blue);">Free tier</span>
+    </div>
+    <div class="pipe-stage stage-process">
+      <span class="ps-icon">⚙️</span>
+      <div class="ps-title">Process</div>
+      <div class="ps-tech">Databricks Workflows<br/>Auto Loader (S3 → Delta)<br/>PySpark · dbt<br/>Entity resolution · Dedup</div>
+      <span class="ps-tag" style="background:rgba(139,92,246,.1);color:var(--purple);">Silver layer</span>
+    </div>
+    <div class="pipe-stage stage-ai">
+      <span class="ps-icon">🤖</span>
+      <div class="ps-title">AI / ML</div>
+      <div class="ps-tech">Databricks MLflow<br/>HuggingFace NER<br/>Prophet Forecasting<br/>Sentiment · Anomaly Det.</div>
+      <span class="ps-tag" style="background:rgba(236,72,153,.1);color:var(--pink);">Enrichment</span>
+    </div>
+    <div class="pipe-stage stage-serve">
+      <span class="ps-icon">🌐</span>
+      <div class="ps-title">Serve</div>
+      <div class="ps-tech">Databricks → S3 Gold<br/>Pre-computed JSON APIs<br/>AWS CloudFront CDN<br/>Edge-cached globally</div>
+      <span class="ps-tag" style="background:rgba(6,182,212,.1);color:var(--cyan);">Gold layer</span>
+    </div>
+    <div class="pipe-stage stage-web">
+      <span class="ps-icon">🖥️</span>
+      <div class="ps-title">Web Dashboard</div>
+      <div class="ps-tech">React / Next.js<br/>Vercel (free)<br/>Fetches Gold JSON<br/>Public · No auth</div>
+      <span class="ps-tag" style="background:rgba(16,185,129,.1);color:var(--green);">Public</span>
+    </div>
+  </div>
+
+  <div class="arch-detail">
+    <div class="ad-card" style="border-left:3px solid var(--amber)">
+      <h4 style="color:var(--amber)">⚡ Ingestion Layer — AWS</h4>
+      <ul>
+        <li>EventBridge rule triggers Lambda every hour (configurable)</li>
+        <li>Lambda #1: Scrapes Naukri job listings (company + role + location)</li>
+        <li>Lambda #2: Pulls LinkedIn public job data via structured HTTP</li>
+        <li>Lambda #3: Fetches EPFO ECR filing changes (ground truth headcount)</li>
+        <li>Lambda #4: Scrapes ET/Moneycontrol headlines for layoff signals</li>
+        <li>Lambda #5: MCA21 company master delta (new registrations)</li>
+        <li>All data lands raw to S3 with no transformation at this stage</li>
+      </ul>
+    </div>
+    <div class="ad-card" style="border-left:3px solid var(--purple)">
+      <h4 style="color:var(--purple)">⚙️ Databricks Processing</h4>
+      <ul>
+        <li>Auto Loader watches S3 bronze prefix, micro-batch trigger on new files</li>
+        <li>Bronze → Silver: clean, normalize, deduplicate, classify events</li>
+        <li>Entity resolution: fuzzy-match company names to MCA21 master</li>
+        <li>Location normalization: raw text → pincode → district → state</li>
+        <li>Event classification: HIRING / LAYOFF / NEUTRAL per record</li>
+        <li>Silver → Gold: district summaries, state rollups, company profiles</li>
+        <li>dbt models for reproducible, version-controlled transformations</li>
+      </ul>
+    </div>
+    <div class="ad-card" style="border-left:3px solid var(--cyan)">
+      <h4 style="color:var(--cyan)">🌐 Serving — Zero-ops API</h4>
+      <ul>
+        <li>Databricks job writes Gold Delta tables as static JSON to S3</li>
+        <li>Files: /api/india.json, /api/states/{id}.json, /api/districts/{id}.json</li>
+        <li>CloudFront distribution serves these files with 1-min TTL</li>
+        <li>Dashboard fetches from CloudFront — no DB, no server, near-zero cost</li>
+        <li>Optional: FastAPI on Lambda for dynamic queries (filters, search)</li>
+        <li>All endpoints public, no authentication required</li>
+      </ul>
+    </div>
+    <div class="ad-card" style="border-left:3px solid var(--green)">
+      <h4 style="color:var(--green)">🔄 Orchestration &amp; Reliability</h4>
+      <ul>
+        <li>Databricks Workflows: visual DAG, retry policies, alerting</li>
+        <li>EventBridge + Lambda for ingestion scheduling (1hr default)</li>
+        <li>Dead-letter queues (SQS) for failed Lambda invocations</li>
+        <li>S3 raw layer = replay source; any stage can re-run from bronze</li>
+        <li>Pipeline is idempotent — re-running any batch is safe</li>
+        <li>Slack/email alerts on pipeline failures via Databricks notifications</li>
+        <li>Data freshness badge in dashboard: shows time since last batch</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════ AI MODELS ════════════ -->
+<section id="aimodels" style="background:var(--s1);">
+<div class="max">
+  <div class="section-label">Intelligence Layer</div>
+  <h2>Built-in <span class="grad">AI &amp; ML Models</span></h2>
+  <p style="color:var(--faint);margin-bottom:8px;">Every Databricks processing run passes data through these models to enrich raw signals into actionable intelligence.</p>
+
+  <div class="ai-grid">
+    <div class="ai-card">
+      <div class="ai-icon">🏷️</div>
+      <h4>Named Entity Recognition (NER)</h4>
+      <p>Fine-tuned BERT model (HuggingFace) extracts company names, locations, and headcount figures from unstructured news headlines and job postings. Runs on Databricks GPU cluster.</p>
+      <div class="ai-output">Output → Structured company events with confidence scores</div>
+    </div>
+    <div class="ai-card">
+      <div class="ai-icon">🔗</div>
+      <h4>Entity Resolution</h4>
+      <p>TF-IDF + fuzzy matching maps 50+ variants of the same company name ("TCS", "Tata Consultancy", "TCS Ltd") to a canonical company ID in the MCA21 master. Confidence threshold: 0.75+.</p>
+      <div class="ai-output">Output → Deduplicated company profiles with MCA21 linking</div>
+    </div>
+    <div class="ai-card">
+      <div class="ai-icon">📉</div>
+      <h4>Trend Forecasting (Prophet)</h4>
+      <p>Facebook Prophet model trained on 12-month rolling window of hiring/layoff signals per state and sector. Predicts next 30-day trajectory. Updated every batch run with new actuals.</p>
+      <div class="ai-output">Output → 30-day forecasts per state, district, sector</div>
+    </div>
+    <div class="ai-card">
+      <div class="ai-icon">😤</div>
+      <h4>Sentiment Analysis</h4>
+      <p>DistilBERT sentiment model classifies news articles about companies as positive/negative/neutral. Aggregated into a "company health score" that weights recent news more heavily.</p>
+      <div class="ai-output">Output → Health score (0–100) per tracked company</div>
+    </div>
+    <div class="ai-card">
+      <div class="ai-icon">🚨</div>
+      <h4>Anomaly Detection</h4>
+      <p>Isolation Forest model flags statistical anomalies — sudden layoff spikes, unusual hiring surges, or silent companies going active. Triggers real-time alerts shown in the dashboard.</p>
+      <div class="ai-output">Output → Anomaly events with severity tags</div>
+    </div>
+    <div class="ai-card">
+      <div class="ai-icon">📍</div>
+      <h4>Location Intelligence</h4>
+      <p>Custom NER + India Post pincode lookup converts raw location strings ("Whitefield", "BKC", "Sector 62") into verified district and state codes. Powers the geographic drill-down.</p>
+      <div class="ai-output">Output → Verified district_code, state_code per company record</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════ DASHBOARD CONCEPTS ════════════ -->
+<section id="concepts">
+<div class="max">
+  <div class="section-label">Web Dashboard</div>
+  <h2>Choose Your <span class="grad">Visualization Approach</span></h2>
+  <p style="color:var(--faint);margin-bottom:40px;">Five distinct directions for how the public sees the data. Click to select the one you want to build — or combine two. Each works with the same Databricks Gold layer underneath.</p>
+
+  <div class="concepts-grid">
+
+    <!-- CONCEPT 1 -->
+    <div class="concept-card" onclick="pickConcept(1, 'GeoIntelligence — India Map Explorer', 'Interactive map as the hero. Click any state → zoom to districts → click district → see all companies with hiring/layoff status. Best for general public and regional exploration.')">
+      <div class="concept-header">
+        <div class="cn-num">CONCEPT 01</div>
+        <div class="cn-name">GeoIntelligence 🗺️</div>
+        <div class="cn-line">India map as the hero — geographic drill-down to every company</div>
+        <div class="cn-badges">
+          <span class="tag" style="color:var(--cyan);border-color:rgba(6,182,212,.3);">Recommended</span>
+          <span class="tag" style="color:var(--green);border-color:rgba(16,185,129,.3);">General Public</span>
+        </div>
+      </div>
+      <div class="concept-preview">
+        <div class="p1-layout">
+          <div class="p1-map">
+            <!-- Simplified India map dots -->
+            <div class="map-dot" style="width:16px;height:16px;left:38%;top:40%;border-color:#22c55e;background:rgba(34,197,94,.2)"></div>
+            <div class="map-dot" style="width:22px;height:22px;left:48%;top:35%;border-color:#22c55e;background:rgba(34,197,94,.2)"></div>
+            <div class="map-dot" style="width:18px;height:18px;left:52%;top:45%;border-color:#06b6d4;background:rgba(6,182,212,.2)"></div>
+            <div class="map-dot" style="width:14px;height:14px;left:44%;top:55%;border-color:#f59e0b;background:rgba(245,158,11,.2)"></div>
+            <div class="map-dot" style="width:20px;height:20px;left:56%;top:30%;border-color:#22c55e;background:rgba(34,197,94,.2)"></div>
+            <div class="map-dot" style="width:12px;height:12px;left:35%;top:60%;border-color:#ef4444;background:rgba(239,68,68,.2)"></div>
+            <div class="map-dot" style="width:10px;height:10px;left:60%;top:55%;border-color:#22c55e;background:rgba(34,197,94,.15)"></div>
+            <div style="position:absolute;bottom:6px;left:6px;font-size:8px;color:#374151;">CartoDB Dark Tiles</div>
+          </div>
+          <div class="p1-panel">
+            <div class="mini-card" style="border-top:2px solid var(--green)">
+              <div class="mini-val" style="color:var(--green)">12,847</div>
+              <div class="mini-lbl">Hiring Now</div>
+            </div>
+            <div class="mini-card" style="border-top:2px solid var(--red)">
+              <div class="mini-val" style="color:var(--red)">3,241</div>
+              <div class="mini-lbl">Layoffs MTD</div>
+            </div>
+            <div class="mini-card">
+              <div style="font-size:9px;color:#6b7280;margin-bottom:3px;">Karnataka</div>
+              <div style="font-size:9px;color:var(--green);">▲ 3,892 hiring</div>
+              <div style="font-size:9px;color:var(--red);">▼ 312 layoffs</div>
+            </div>
+            <div class="mini-card" style="flex:1">
+              <div style="font-size:9px;color:#4a5568">Bengaluru</div>
+              <div style="font-size:8px;color:#6b7280;">1,123 companies</div>
+              <div style="background:rgba(16,185,129,.15);border-radius:3px;padding:2px 4px;font-size:8px;color:var(--green);margin-top:3px;">IT Hub #1</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="concept-body">
+        <div class="cb-section">
+          <h5>What it does</h5>
+          <p>Interactive Leaflet map centred on India. Click a state bubble → zoom in, districts appear. Click a district → right panel shows every company with hiring/layoff status, role count, trend. Full text search across all levels.</p>
+        </div>
+        <div class="pros-cons">
+          <div>
+            <div class="pro-item">Most intuitive for any user</div>
+            <div class="pro-item">Geographic context always visible</div>
+            <div class="pro-item">Drill-down feels natural</div>
+            <div class="pro-item">Works on mobile</div>
+          </div>
+          <div>
+            <div class="con-item">Less data density per view</div>
+            <div class="con-item">Heavy for slow connections</div>
+          </div>
+        </div>
+      </div>
+      <button class="choose-btn" onclick="event.stopPropagation();pickConcept(1,'GeoIntelligence — India Map Explorer','Interactive map as the hero. Click any state → zoom to districts → click district → see all companies. Best for general public and regional exploration.')">Select this concept</button>
+    </div>
+
+    <!-- CONCEPT 2 -->
+    <div class="concept-card" onclick="pickConcept(2,'Command Center — Live Data Feed','Three-column real-time feed. Left column streams every hiring/layoff event as it arrives. Centre has live charts. Right shows a mini map with active hotspots.')">
+      <div class="concept-header">
+        <div class="cn-num">CONCEPT 02</div>
+        <div class="cn-name">Command Center 📡</div>
+        <div class="cn-line">Live event feed · real-time charts · hotspot map — all at once</div>
+        <div class="cn-badges">
+          <span class="tag" style="color:var(--amber);border-color:rgba(245,158,11,.3);">Power Users</span>
+          <span class="tag" style="color:var(--blue);border-color:rgba(59,130,246,.3);">Analysts</span>
+        </div>
+      </div>
+      <div class="concept-preview">
+        <div class="p2-layout">
+          <div class="p2-feed">
+            <div style="font-size:7px;color:#4b5563;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px;">LIVE FEED</div>
+            <div class="feed-item" style="border-color:var(--green)"><div class="fi-co" style="color:var(--green)">Infosys</div><div class="fi-num">+3,200 roles</div></div>
+            <div class="feed-item" style="border-color:var(--red)"><div class="fi-co" style="color:var(--red)">BYJU's</div><div class="fi-num">-560 layoffs</div></div>
+            <div class="feed-item" style="border-color:var(--green)"><div class="fi-co" style="color:var(--green)">TCS</div><div class="fi-num">+2,400 roles</div></div>
+            <div class="feed-item" style="border-color:var(--amber)"><div class="fi-co" style="color:var(--amber)">Zomato</div><div class="fi-num">±320/180</div></div>
+            <div class="feed-item" style="border-color:var(--red)"><div class="fi-co" style="color:var(--red)">Paytm</div><div class="fi-num">-450 layoffs</div></div>
+          </div>
+          <div class="p2-charts">
+            <div class="mini-chart">
+              <div style="font-size:8px;color:#4b5563;margin-bottom:4px;">Hiring by Sector</div>
+              <div style="display:flex;align-items:flex-end;gap:2px;height:40px;">
+                <div style="background:rgba(16,185,129,.6);width:18px;height:90%;border-radius:2px 2px 0 0;"></div>
+                <div style="background:rgba(59,130,246,.6);width:18px;height:55%;border-radius:2px 2px 0 0;"></div>
+                <div style="background:rgba(139,92,246,.6);width:18px;height:40%;border-radius:2px 2px 0 0;"></div>
+                <div style="background:rgba(245,158,11,.6);width:18px;height:30%;border-radius:2px 2px 0 0;"></div>
+                <div style="background:rgba(6,182,212,.6);width:18px;height:20%;border-radius:2px 2px 0 0;"></div>
+              </div>
+            </div>
+            <div class="mini-chart">
+              <div style="font-size:8px;color:#4b5563;margin-bottom:2px;">30-day trend</div>
+              <svg width="100%" height="30" viewBox="0 0 120 30">
+                <polyline points="0,25 15,22 30,18 45,20 60,14 75,12 90,10 105,8 120,6" fill="none" stroke="#10b981" stroke-width="1.5"/>
+                <polyline points="0,28 15,27 30,26 45,28 60,27 75,29 90,26 105,27 120,28" fill="none" stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="3,2"/>
+              </svg>
+            </div>
+          </div>
+          <div class="p2-map">
+            <div style="background:#0d1b2a;width:100%;height:100%;border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;">
+              <div style="font-size:7px;color:#4b5563;margin-bottom:4px;">HOTSPOTS</div>
+              <div style="width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);"></div>
+              <div style="font-size:7px;color:#6b7280;">Bengaluru</div>
+              <div style="width:6px;height:6px;border-radius:50%;background:var(--blue);box-shadow:0 0 5px var(--blue);margin-top:4px;"></div>
+              <div style="font-size:7px;color:#6b7280;">Hyderabad</div>
+              <div style="width:5px;height:5px;border-radius:50%;background:var(--amber);box-shadow:0 0 4px var(--amber);margin-top:4px;"></div>
+              <div style="font-size:7px;color:#6b7280;">Mumbai</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="concept-body">
+        <div class="cb-section">
+          <h5>What it does</h5>
+          <p>Three-column layout. Left: live event ticker streaming every hiring/layoff event as batches arrive (simulated in real-time). Centre: sector bar charts + trend sparklines. Right: mini hotspot map. Dense information, feels like a trading terminal.</p>
+        </div>
+        <div class="pros-cons">
+          <div>
+            <div class="pro-item">Maximum information density</div>
+            <div class="pro-item">Real-time feed is compelling</div>
+            <div class="pro-item">Great for monitoring</div>
+          </div>
+          <div>
+            <div class="con-item">Overwhelming for casual users</div>
+            <div class="con-item">Less geographic depth</div>
+            <div class="con-item">Harder to explore by location</div>
+          </div>
+        </div>
+      </div>
+      <button class="choose-btn" onclick="event.stopPropagation();pickConcept(2,'Command Center — Live Feed','Three-column: event feed + charts + hotspot map. Maximum information density, great for analysts and monitoring.')">Select this concept</button>
+    </div>
+
+    <!-- CONCEPT 3 -->
+    <div class="concept-card" onclick="pickConcept(3,'Market Intelligence Platform','Bloomberg-style sortable data tables with advanced filters. Every company as a row. Exportable CSV/JSON. Best for investors, recruiters, and power researchers.')">
+      <div class="concept-header">
+        <div class="cn-num">CONCEPT 03</div>
+        <div class="cn-name">Market Intelligence Platform 📊</div>
+        <div class="cn-line">Bloomberg-style tables — every company, fully sortable, filterable &amp; exportable</div>
+        <div class="cn-badges">
+          <span class="tag" style="color:var(--purple);border-color:rgba(139,92,246,.3);">Investors / VC</span>
+          <span class="tag" style="color:var(--blue);border-color:rgba(59,130,246,.3);">HR / Talent</span>
+        </div>
+      </div>
+      <div class="concept-preview">
+        <div class="p3-layout">
+          <div class="p3-filters">
+            <span class="p3-chip on">All Sectors ▾</span>
+            <span class="p3-chip on">All India ▾</span>
+            <span class="p3-chip">🟢 Hiring</span>
+            <span class="p3-chip">Sort: Openings ↓</span>
+            <span class="p3-chip">Export CSV</span>
+          </div>
+          <div class="p3-table">
+            <div class="p3-thead">
+              <div class="th">Company</div>
+              <div class="th">Sector</div>
+              <div class="th">District</div>
+              <div class="th">Openings</div>
+              <div class="th">Layoffs</div>
+              <div class="th">Trend</div>
+            </div>
+            <div class="p3-row">
+              <div class="td name">Infosys</div><div class="td">IT Svcs</div><div class="td">Bengaluru</div>
+              <div class="td green">3,200</div><div class="td">0</div><div class="td green">↑ +18%</div>
+            </div>
+            <div class="p3-row">
+              <div class="td name">TCS</div><div class="td">IT Svcs</div><div class="td">Mumbai</div>
+              <div class="td green">2,400</div><div class="td">0</div><div class="td green">↑ +12%</div>
+            </div>
+            <div class="p3-row">
+              <div class="td name">BYJU's</div><div class="td">EdTech</div><div class="td">Bengaluru</div>
+              <div class="td">50</div><div class="td red">560</div><div class="td red">↓ -34%</div>
+            </div>
+            <div class="p3-row">
+              <div class="td name">Paytm</div><div class="td">Fintech</div><div class="td">Delhi</div>
+              <div class="td">90</div><div class="td red">450</div><div class="td red">↓ -28%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="concept-body">
+        <div class="cb-section">
+          <h5>What it does</h5>
+          <p>Filterable, sortable table of every tracked company. Columns: Name, Sector, District, State, Openings, Layoffs MTD, Trend %, AI Health Score, Last Seen. Rows color-coded by status. Export to CSV/JSON. Click any row → full company profile with 12-month history.</p>
+        </div>
+        <div class="pros-cons">
+          <div>
+            <div class="pro-item">Best for research &amp; due diligence</div>
+            <div class="pro-item">Exportable data (CSV/JSON)</div>
+            <div class="pro-item">Power user filters</div>
+            <div class="pro-item">Fastest to find a company</div>
+          </div>
+          <div>
+            <div class="con-item">No geographic intuition</div>
+            <div class="con-item">Less visual appeal</div>
+          </div>
+        </div>
+      </div>
+      <button class="choose-btn" onclick="event.stopPropagation();pickConcept(3,'Market Intelligence Platform','Bloomberg-style sortable company database. Best for investors, recruiters, and researchers who need to find specific companies quickly.')">Select this concept</button>
+    </div>
+
+    <!-- CONCEPT 4 -->
+    <div class="concept-card" onclick="pickConcept(4,'Weekly Pulse — Editorial Report','Auto-generated weekly digest. Data journalism style — narrative text + animated charts + shareable sections. Like a newspaper for India hiring data.')">
+      <div class="concept-header">
+        <div class="cn-num">CONCEPT 04</div>
+        <div class="cn-name">Weekly Pulse 📰</div>
+        <div class="cn-line">Auto-generated data journalism — narrative + charts + shareable sections</div>
+        <div class="cn-badges">
+          <span class="tag" style="color:var(--green);border-color:rgba(16,185,129,.3);">General Public</span>
+          <span class="tag" style="color:var(--amber);border-color:rgba(245,158,11,.3);">Media / Press</span>
+        </div>
+      </div>
+      <div class="concept-preview">
+        <div class="p4-layout">
+          <div class="p4-date">📅 Week of March 10–16, 2026 · India Labour Intelligence</div>
+          <div class="p4-headline">India added 9,606 net jobs this week — IT sector leads for the 14th consecutive month</div>
+          <div class="p4-summary">Bengaluru and Hyderabad drove 62% of new IT hiring. EdTech sector continues workforce reduction with BYJU's and Unacademy accounting for 810 combined layoffs...</div>
+          <div class="p4-charts-row">
+            <div class="p4-stat"><div class="p4-stat-val" style="color:var(--green)">+12,847</div><div class="p4-stat-lbl">New roles posted</div></div>
+            <div class="p4-stat"><div class="p4-stat-val" style="color:var(--red)">−3,241</div><div class="p4-stat-lbl">Layoffs reported</div></div>
+            <div class="p4-stat"><div class="p4-stat-val" style="color:var(--cyan)">48</div><div class="p4-stat-lbl">States tracked</div></div>
+          </div>
+          <div class="scroll-dots"><div class="sdot on"></div><div class="sdot"></div><div class="sdot"></div><div class="sdot"></div></div>
+        </div>
+      </div>
+      <div class="concept-body">
+        <div class="cb-section">
+          <h5>What it does</h5>
+          <p>Auto-generated weekly report. Databricks runs a Spark job that writes narrative text + pre-rendered chart images to S3. The website shows a scroll-through "newspaper" of the data story. Each section is shareable as a social card. Powered by an LLM summarising the Gold layer data.</p>
+        </div>
+        <div class="pros-cons">
+          <div>
+            <div class="pro-item">Most shareable on social media</div>
+            <div class="pro-item">Accessible to non-data users</div>
+            <div class="pro-item">LLM narrative adds context</div>
+          </div>
+          <div>
+            <div class="con-item">Weekly only — not real-time</div>
+            <div class="con-item">Less interactive depth</div>
+            <div class="con-item">LLM narrative quality varies</div>
+          </div>
+        </div>
+      </div>
+      <button class="choose-btn" onclick="event.stopPropagation();pickConcept(4,'Weekly Pulse — Editorial Report','Auto-generated data journalism. Best for virality, press coverage, and public awareness. An LLM writes the narrative from Databricks Gold layer data.')">Select this concept</button>
+    </div>
+
+    <!-- CONCEPT 5 -->
+    <div class="concept-card" onclick="pickConcept(5,'Open API + Developer Hub','HireWatch as a public data platform. REST API + interactive docs + embeddable widgets. Other developers and journalists can build on top of your data.')">
+      <div class="concept-header">
+        <div class="cn-num">CONCEPT 05</div>
+        <div class="cn-name">Open API + Developer Hub 🔌</div>
+        <div class="cn-line">Public REST API · embeddable widgets · open data download · developer ecosystem</div>
+        <div class="cn-badges">
+          <span class="tag" style="color:var(--blue);border-color:rgba(59,130,246,.3);">Developers</span>
+          <span class="tag" style="color:var(--purple);border-color:rgba(139,92,246,.3);">Researchers</span>
+        </div>
+      </div>
+      <div class="concept-preview">
+        <div class="p5-layout">
+          <div class="p5-left">
+            <div style="font-size:11px;font-weight:700;color:var(--cyan);margin-bottom:8px;">HireWatch API v1.0</div>
+            <div class="api-line"><span class="api-method get">GET</span><span class="api-path">/v1/states</span></div>
+            <div class="api-line"><span class="api-method get">GET</span><span class="api-path">/v1/districts/{id}</span></div>
+            <div class="api-line"><span class="api-method get">GET</span><span class="api-path">/v1/companies/hiring</span></div>
+            <div class="api-line"><span class="api-method get">GET</span><span class="api-path">/v1/companies/layoffs</span></div>
+            <div class="api-line"><span class="api-method get">GET</span><span class="api-path">/v1/trends/{sector}</span></div>
+            <div style="margin-top:8px;background:#0d1b2a;border-radius:4px;padding:5px 7px;font-size:8px;font-family:monospace;color:#6b7280;">
+              &gt; Try it in browser →
+            </div>
+          </div>
+          <div class="p5-right">
+            <div class="widget-preview">
+              <div style="text-align:center">
+                <div style="font-size:11px;font-weight:800;color:var(--green)">+12,847</div>
+                <div style="font-size:8px;color:#4b5563;">Embed widget</div>
+              </div>
+            </div>
+            <div class="widget-preview">
+              <div style="text-align:center">
+                <div style="font-size:9px;color:#4b5563;margin-bottom:3px;">CSV</div>
+                <div style="font-size:8px;color:var(--cyan);">Download ↓</div>
+              </div>
+            </div>
+            <div class="widget-preview" style="flex:none;height:36px;">
+              <div style="font-size:8px;color:#4b5563;">Swagger Docs</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="concept-body">
+        <div class="cb-section">
+          <h5>What it does</h5>
+          <p>CloudFront-served JSON API with interactive Swagger docs. Embeddable badge widgets for third-party sites. Bulk CSV download of Gold layer data. Companion minimal dashboard that demonstrates the API. This turns HireWatch into a platform others build on top of.</p>
+        </div>
+        <div class="pros-cons">
+          <div>
+            <div class="pro-item">Becomes a data platform</div>
+            <div class="pro-item">Journalists &amp; devs build on it</div>
+            <div class="pro-item">Zero-cost to serve (static JSON)</div>
+          </div>
+          <div>
+            <div class="con-item">Less visual for general public</div>
+            <div class="con-item">Needs audience of developers</div>
+          </div>
+        </div>
+      </div>
+      <button class="choose-btn" onclick="event.stopPropagation();pickConcept(5,'Open API + Developer Hub','Best for building an ecosystem. Becomes a public data platform. Developers and journalists can build their own views on top of your data.')">Select this concept</button>
+    </div>
+
+  </div><!-- /concepts-grid -->
+
+  <!-- RECOMMENDATION -->
+  <div style="margin-top:40px;background:linear-gradient(135deg,rgba(6,182,212,.06),rgba(139,92,246,.06));
+              border:1px solid rgba(6,182,212,.2);border-radius:16px;padding:28px;">
+    <div class="section-label" style="color:var(--cyan);">Our Recommendation</div>
+    <h3 style="margin-bottom:10px;">Combine <span class="grad">Concept 01 + Concept 03</span></h3>
+    <p style="color:var(--faint);font-size:14px;max-width:760px;">Build the <strong style="color:var(--text);">GeoIntelligence map</strong> as the public landing page (most compelling for general visitors) and add a <strong style="color:var(--text);">Market Intelligence table view</strong> behind a "Deep Dive" tab for power users, investors, and HR teams who need to search by company name or export data. Both views read from the same Databricks Gold JSON on CloudFront — zero additional backend work.</p>
+  </div>
+</div>
+</section>
+
+<!-- ════════════ HOSTING ════════════ -->
+<section id="hosting" style="background:var(--s1);">
+<div class="max">
+  <div class="section-label">Deployment &amp; Hosting</div>
+  <h2>Public Hosting <span class="grad">Options</span></h2>
+  <p style="color:var(--faint);margin-bottom:8px;">All options serve the same pre-computed JSON from S3. Choose based on your domain preference and dev workflow.</p>
+
+  <div class="h-grid">
+    <div class="h-card recommended">
+      <div class="rec-badge">★ Recommended</div>
+      <h4>Vercel + S3 + CloudFront</h4>
+      <div class="h-cost">~$5 <span>/ month total</span></div>
+      <div class="h-item">Dashboard on Vercel free tier (Next.js)</div>
+      <div class="h-item">Data API: S3 + CloudFront ($1–3/mo)</div>
+      <div class="h-item">Custom domain via Cloudflare (free)</div>
+      <div class="h-item">Auto-deploy from GitHub on push</div>
+      <div class="h-item">Global CDN, 99.99% uptime SLA</div>
+      <div class="h-item">Zero server management</div>
+    </div>
+    <div class="h-card">
+      <h4>AWS S3 Static + CloudFront</h4>
+      <div class="h-cost">~$3 <span>/ month total</span></div>
+      <div class="h-item">Dashboard HTML/JS hosted on S3</div>
+      <div class="h-item">CloudFront distribution for CDN</div>
+      <div class="h-item">Route 53 for custom domain ($0.50/mo)</div>
+      <div class="h-item">Fully within AWS ecosystem</div>
+      <div class="h-item">No CI/CD without extra setup</div>
+    </div>
+    <div class="h-card">
+      <h4>Netlify + S3</h4>
+      <div class="h-cost">~$4 <span>/ month total</span></div>
+      <div class="h-item">Netlify free tier for dashboard hosting</div>
+      <div class="h-item">S3 + CloudFront for data API</div>
+      <div class="h-item">Auto-deploy from GitHub</div>
+      <div class="h-item">Built-in preview URLs per branch</div>
+      <div class="h-item">Good alternative to Vercel</div>
+    </div>
+    <div class="h-card">
+      <h4>Railway / Render (Full Stack)</h4>
+      <div class="h-cost">~$10 <span>/ month total</span></div>
+      <div class="h-item">Node.js/FastAPI backend on Railway</div>
+      <div class="h-item">Backend queries S3/Databricks live</div>
+      <div class="h-item">Enables dynamic filtering via API</div>
+      <div class="h-item">More powerful but more to manage</div>
+      <div class="h-item">Best if you need server-side search</div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════ SCHEDULE & COST ════════════ -->
+<section id="schedule">
+<div class="max">
+  <div class="section-label">Automation &amp; Schedule</div>
+  <h2>Pipeline <span class="grad">Timing &amp; Cost</span></h2>
+  <p style="color:var(--faint);margin-bottom:8px;">Every component runs automatically. You never touch it once it's live.</p>
+
+  <div class="sched-grid">
+    <div class="sched-card">
+      <div class="sched-icon">⏱️</div>
+      <h4>Ingestion — Every Hour</h4>
+      <p>AWS EventBridge triggers all Lambda scrapers at the top of each hour. Each Lambda runs for ~2–4 minutes and dumps raw JSON to S3. Configurable to 30-min or 15-min intervals if needed (more Lambda cost).</p>
+      <div class="sched-pill">EventBridge cron: 0 * * * *</div>
+    </div>
+    <div class="sched-card">
+      <div class="sched-icon">⚙️</div>
+      <h4>Databricks Workflow — Every Hour +5 min</h4>
+      <p>Databricks job triggers 5 minutes after ingestion completes. Auto Loader detects new S3 files, runs Bronze → Silver → Gold pipeline. Total runtime: ~8–12 minutes including AI enrichment.</p>
+      <div class="sched-pill">Databricks cron: 5 * * * *</div>
+    </div>
+    <div class="sched-card">
+      <div class="sched-icon">🌐</div>
+      <h4>Dashboard Refresh — On Data Write</h4>
+      <p>The last step in the Databricks Workflow writes fresh JSON files to S3. CloudFront TTL of 5 minutes means public users see new data within 5 minutes of the batch completing. No manual refresh needed.</p>
+      <div class="sched-pill">CloudFront TTL: 300s</div>
+    </div>
+    <div class="sched-card">
+      <div class="sched-icon">🤖</div>
+      <h4>AI Models — Every Batch Run</h4>
+      <p>NER, sentiment, and entity resolution run on every batch. Prophet forecasting re-trains every 24 hours on the full history (more expensive, runs nightly). Anomaly detection runs every batch on the delta records only.</p>
+      <div class="sched-pill">Forecast retrain: 0 2 * * *</div>
+    </div>
+  </div>
+
+  <h3 style="margin-top:48px;margin-bottom:16px;">Monthly Cost Estimate</h3>
+  <table class="cost-table">
+    <thead>
+      <tr><th>Service</th><th>Usage</th><th>Tier</th><th>Est. Cost/month</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>AWS Lambda (scrapers)</td><td>~720 invocations/mo (hourly × 5 functions × ~30 days)</td><td>Free tier (1M free/mo)</td><td style="color:var(--green);">$0</td></tr>
+      <tr><td>AWS S3 (raw + gold storage)</td><td>~2–5 GB total (compressed JSON)</td><td>Free tier (5 GB)</td><td style="color:var(--green);">$0–1</td></tr>
+      <tr><td>AWS CloudFront (CDN)</td><td>~10–50 GB transfer out/mo</td><td>Free tier (1 TB)</td><td style="color:var(--green);">$0–2</td></tr>
+      <tr><td>AWS EventBridge</td><td>~720 rule triggers/mo</td><td>Free tier (14M/mo)</td><td style="color:var(--green);">$0</td></tr>
+      <tr><td>Databricks</td><td>~30 hrs/mo (1 DBU/hr worker × hourly runs)</td><td>Community Edition or $0.07/DBU</td><td style="color:var(--amber);">$0–5</td></tr>
+      <tr><td>Vercel (dashboard)</td><td>Static Next.js hosting</td><td>Free hobby tier</td><td style="color:var(--green);">$0</td></tr>
+      <tr><td>Cloudflare (domain + DNS)</td><td>Custom domain proxy + SSL</td><td>Free tier</td><td style="color:var(--green);">$0</td></tr>
+      <tr><td colspan="3" style="font-weight:700;">Total estimated monthly spend</td><td style="color:var(--cyan);font-size:18px;font-weight:800;">$2 – $8 / month</td></tr>
+    </tbody>
+  </table>
+</div>
+</section>
+
+<!-- ════════════ TECH STACK SUMMARY ════════════ -->
+<section style="background:var(--s1);">
+<div class="max">
+  <div class="section-label">Final Stack</div>
+  <h2>Complete <span class="grad">Tech Stack</span></h2>
+  <div class="arch-detail" style="margin-top:24px;">
+    <div class="ad-card" style="border-left:3px solid var(--amber)">
+      <h4 style="color:var(--amber)">Ingestion</h4>
+      <ul>
+        <li>AWS Lambda (Python 3.12)</li><li>AWS EventBridge Scheduler</li>
+        <li>BeautifulSoup4 + httpx (scraping)</li><li>AWS S3 (boto3)</li>
+        <li>AWS SQS (dead-letter queue)</li>
+      </ul>
+    </div>
+    <div class="ad-card" style="border-left:3px solid var(--purple)">
+      <h4 style="color:var(--purple)">Data Engineering</h4>
+      <ul>
+        <li>Databricks (Apache Spark 3.5)</li><li>Delta Lake (ACID transactions)</li>
+        <li>Databricks Auto Loader</li><li>dbt (data transformations)</li>
+        <li>Databricks Workflows (orchestration)</li>
+      </ul>
+    </div>
+    <div class="ad-card" style="border-left:3px solid var(--pink)">
+      <h4 style="color:var(--pink)">AI / ML</h4>
+      <ul>
+        <li>HuggingFace Transformers (NER, sentiment)</li><li>Prophet (time series forecasting)</li>
+        <li>scikit-learn (entity resolution, anomaly)</li><li>Databricks MLflow (model registry)</li>
+        <li>Databricks Feature Store</li>
+      </ul>
+    </div>
+    <div class="ad-card" style="border-left:3px solid var(--cyan)">
+      <h4 style="color:var(--cyan)">Serving</h4>
+      <ul>
+        <li>AWS S3 (Gold JSON files)</li><li>AWS CloudFront (edge CDN)</li>
+        <li>Optional: FastAPI on AWS Lambda</li><li>Cloudflare (DNS + SSL)</li>
+      </ul>
+    </div>
+    <div class="ad-card" style="border-left:3px solid var(--green)">
+      <h4 style="color:var(--green)">Frontend</h4>
+      <ul>
+        <li>Next.js 14 (React)</li><li>Leaflet.js (map)</li>
+        <li>Chart.js / Recharts (charts)</li><li>Tailwind CSS (styling)</li>
+        <li>Vercel (hosting, free tier)</li>
+      </ul>
+    </div>
+    <div class="ad-card" style="border-left:3px solid var(--blue)">
+      <h4 style="color:var(--blue)">DevOps / IaC</h4>
+      <ul>
+        <li>Terraform (AWS infrastructure)</li><li>GitHub Actions (CI/CD)</li>
+        <li>AWS CloudWatch (monitoring)</li><li>Databricks Notifications (alerts)</li>
+        <li>Git (version control)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ════════════ FOOTER ════════════ -->
+<footer>
+<div class="max">
+  <p style="font-size:16px;font-weight:700;margin-bottom:6px;" class="grad">HireWatch India — Architecture Proposal</p>
+  <p>AWS S3 · Databricks · Delta Lake · AI/ML · CloudFront · Vercel · Public Access</p>
+  <p style="margin-top:8px;color:#374151;font-size:12px;">Select a dashboard concept above to proceed with implementation.</p>
+</div>
+</footer>
+
+<!-- ════════════ SELECTION LOGIC ════════════ -->
+<div id="selection-result">
+  <h4 id="sel-title"></h4>
+  <p id="sel-desc"></p>
+</div>
+
+<script>
+let selectedConcept = null;
+
+function pickConcept(num, title, desc) {
+  selectedConcept = num;
+  document.querySelectorAll('.concept-card').forEach((c,i) => {
+    c.classList.toggle('selected', i === num - 1);
+  });
+  const res = document.getElementById('selection-result');
+  document.getElementById('sel-title').textContent = '✓ Selected: ' + title;
+  document.getElementById('sel-desc').textContent = desc;
+  res.style.display = 'block';
+  setTimeout(() => { if(selectedConcept === num) res.style.opacity = '1'; }, 10);
+  // Auto-hide after 6s
+  setTimeout(() => { res.style.display = 'none'; }, 6000);
+}
+
+// Smooth scroll for any anchor links
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    document.querySelector(a.getAttribute('href'))?.scrollIntoView({behavior:'smooth'});
+  });
+});
+</script>
+</body>
+</html>

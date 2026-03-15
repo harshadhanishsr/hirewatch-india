@@ -1,0 +1,48 @@
+# ─────────────────────────────────────────────────────────────────
+# HireWatch India — Pipeline Dependencies
+# Install: pip install -r requirements_pipeline.txt
+# Python 3.11+ required
+# ─────────────────────────────────────────────────────────────────
+
+# HTTP / scraping
+requests==2.31.0
+beautifulsoup4==4.12.3
+lxml==5.1.0
+fake-useragent==1.4.0
+cloudscraper==1.2.71
+
+# HTML parsing
+html5lib==1.1
+chardet==5.2.0
+
+# Data wrangling (replaces PySpark — lighter, faster on GH Actions)
+pandas
+numpy
+pyarrow
+python-dateutil==2.9.0
+
+# AWS S3
+boto3==1.34.69
+botocore==1.34.69
+
+# JSON
+orjson==3.10.1
+
+# Logging
+structlog==24.1.0
+
+# Retry
+tenacity==8.2.3
+
+# Env
+python-dotenv==1.0.1
+
+# Date helpers
+pytz==2024.1
+
+# News API
+newsapi-python==0.2.7
+
+# Text normalisation
+Unidecode==1.3.8
+rapidfuzz==3.6.1

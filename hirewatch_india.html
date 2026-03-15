@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>HireWatch India — Live Hiring & Layoff Intelligence</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --bg:#020b18;--s1:#060f20;--s2:#0c1a30;--card:rgba(255,255,255,.045);
+  --border:rgba(255,255,255,.07);--b2:rgba(255,255,255,.13);
+  --text:#e8edf5;--muted:#6b7a96;--faint:#94a3b8;
+  --green:#10b981;--red:#f43f5e;--blue:#3b82f6;--purple:#8b5cf6;--amber:#f59e0b;--cyan:#06b6d4;
+  --gold:#fbbf24;--silver:#94a3b8;--bronze:#c2845a;
+}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:'Segoe UI',system-ui,-apple-system,sans-serif;}
+body{display:flex;flex-direction:column;}
+
+/* ── TICKER ── */
+#ticker{
+  height:32px;background:linear-gradient(90deg,rgba(6,182,212,.12),rgba(139,92,246,.12));
+  border-bottom:1px solid var(--border);display:flex;align-items:center;
+  padding:0 16px;gap:12px;flex-shrink:0;overflow:hidden;
+}
+.tick-label{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+  color:var(--cyan);white-space:nowrap;border-right:1px solid var(--border);padding-right:12px;}
+#tick-text{font-size:11px;color:var(--faint);transition:opacity .4s;}
+#tick-text.fade{opacity:0;}
+
+/* ── HEADER ── */
+#header{
+  display:flex;align-items:center;gap:12px;padding:0 14px;height:52px;
+  background:var(--s1);border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.logo{display:flex;align-items:center;gap:9px;white-space:nowrap;}
+.logo-icon{width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,#06b6d4,#8b5cf6);
+  display:flex;align-items:center;justify-content:center;font-size:16px;}
+.logo-name{font-size:14px;font-weight:800;
+  background:linear-gradient(135deg,#06b6d4,#8b5cf6);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.logo-sub{font-size:9px;color:var(--muted);letter-spacing:.5px;}
+
+/* ── ANSWER CARDS ── */
+#answers{
+  display:flex;gap:8px;flex:1;overflow:hidden;
+}
+.ans{
+  flex:1;background:var(--card);border:1px solid var(--border);border-radius:8px;
+  padding:5px 10px;position:relative;overflow:hidden;cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;gap:8px;
+}
+.ans:hover{border-color:var(--ac,var(--cyan));}
+.ans::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--ac,var(--cyan));}
+.ans-icon{font-size:16px;}
+.ans-body{}
+.ans-q{font-size:9px;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.5px;}
+.ans-city{font-size:13px;font-weight:800;color:var(--ac,var(--text));line-height:1;}
+.ans-val{font-size:10px;color:var(--faint);margin-top:1px;}
+
+/* live badge */
+.live-wrap{display:flex;align-items:center;gap:7px;white-space:nowrap;
+  background:var(--card);border:1px solid var(--border);border-radius:20px;padding:4px 10px;}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.dot{animation:blink 1.5s infinite;}
+.live-wrap span{font-size:10px;color:var(--muted);}
+.live-wrap strong{font-size:10px;color:var(--green);}
+#clock{font-size:10px;color:var(--muted);}
+
+/* ── MAIN ── */
+#main{display:flex;flex:1;overflow:hidden;}
+#map{flex:1;min-width:0;background:#040d1a;}
+
+/* ── RIGHT PANEL ── */
+#panel{
+  width:340px;flex-shrink:0;display:flex;flex-direction:column;
+  background:var(--s1);border-left:1px solid var(--border);overflow:hidden;
+}
+
+/* Mode switcher */
+#mode-bar{
+  display:flex;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.mbt{
+  flex:1;padding:9px 4px;text-align:center;font-size:10px;font-weight:700;
+  letter-spacing:.3px;cursor:pointer;color:var(--muted);border:none;background:none;
+  border-bottom:2px solid transparent;transition:all .2s;
+}
+.mbt.on{color:var(--mc,var(--cyan));border-bottom-color:var(--mc,var(--cyan));background:rgba(255,255,255,.03);}
+
+/* Panel header */
+#ph{padding:10px 14px 8px;border-bottom:1px solid var(--border);flex-shrink:0;}
+#ph-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px;}
+#ph-sub{font-size:10px;color:var(--muted);}
+#ph-crumb{font-size:10px;color:var(--muted);margin-top:3px;}
+.crumb-link{color:var(--cyan);cursor:pointer;}
+.crumb-link:hover{text-decoration:underline;}
+
+/* Search */
+#psearch{padding:8px 12px;border-bottom:1px solid var(--border);flex-shrink:0;}
+#si{width:100%;background:var(--s2);border:1px solid var(--border);border-radius:6px;
+  padding:7px 11px;color:var(--text);font-size:11px;outline:none;}
+#si:focus{border-color:var(--cyan);}
+#si::placeholder{color:var(--muted);}
+
+/* Panel content */
+#pc{flex:1;overflow-y:auto;}
+#pc::-webkit-scrollbar{width:3px;}
+#pc::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+/* ── RANKING LIST ── */
+.rk-item{
+  display:flex;align-items:center;gap:10px;padding:9px 14px;
+  border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;
+}
+.rk-item:hover,.rk-item.on{background:rgba(255,255,255,.04);}
+.rk-num{
+  width:24px;height:24px;border-radius:50%;display:flex;align-items:center;
+  justify-content:center;font-size:10px;font-weight:800;flex-shrink:0;
+}
+.rk-1{background:rgba(251,191,36,.15);color:var(--gold);border:1px solid rgba(251,191,36,.3);}
+.rk-2{background:rgba(148,163,184,.12);color:var(--silver);border:1px solid rgba(148,163,184,.25);}
+.rk-3{background:rgba(194,132,90,.15);color:var(--bronze);border:1px solid rgba(194,132,90,.3);}
+.rk-n{background:var(--card);color:var(--muted);border:1px solid var(--border);}
+.rk-body{flex:1;min-width:0;}
+.rk-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.rk-state{font-size:10px;color:var(--muted);}
+.rk-right{text-align:right;flex-shrink:0;}
+.rk-val{font-size:14px;font-weight:800;}
+.rk-sub{font-size:9px;color:var(--muted);}
+.rk-bar{height:2px;border-radius:1px;margin-top:4px;background:var(--mc,var(--cyan));opacity:.6;}
+
+/* ── COMPANY LIST ── */
+.city-header{
+  padding:10px 14px;background:var(--s2);border-bottom:1px solid var(--border);
+}
+.city-h-name{font-size:14px;font-weight:800;margin-bottom:2px;}
+.city-h-state{font-size:10px;color:var(--muted);}
+.city-stats{display:flex;gap:6px;margin-top:6px;}
+.cstat{flex:1;background:var(--card);border:1px solid var(--border);border-radius:6px;
+  padding:5px 8px;text-align:center;}
+.cstat-v{font-size:13px;font-weight:700;}
+.cstat-l{font-size:9px;color:var(--muted);}
+
+.co-item{
+  display:flex;align-items:center;gap:9px;padding:8px 14px;
+  border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;
+}
+.co-item:hover{background:rgba(255,255,255,.03);}
+.co-avatar{
+  width:30px;height:30px;border-radius:7px;display:flex;align-items:center;
+  justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;
+}
+.co-body{flex:1;min-width:0;}
+.co-name{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.co-meta{font-size:9px;color:var(--muted);}
+.co-right{text-align:right;flex-shrink:0;}
+.co-val{font-size:12px;font-weight:700;}
+.co-trend{font-size:9px;color:var(--muted);}
+.badge{font-size:8px;font-weight:700;padding:2px 6px;border-radius:8px;display:inline-block;}
+.badge-h{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.2);}
+.badge-l{background:rgba(244,63,94,.15);color:var(--red);border:1px solid rgba(244,63,94,.2);}
+.badge-m{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.2);}
+
+/* ── SECTOR BAR ── */
+#sbar{
+  display:flex;gap:0;height:30px;background:var(--s1);border-top:1px solid var(--border);
+  flex-shrink:0;overflow:hidden;
+}
+.sb-seg{
+  display:flex;align-items:center;justify-content:center;gap:4px;
+  font-size:9px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;
+  overflow:hidden;white-space:nowrap;padding:0 6px;transition:flex .5s ease;cursor:default;
+}
+.sb-seg:hover{filter:brightness(1.2);}
+
+/* ── LEAFLET OVERRIDES ── */
+.leaflet-container{background:#04091a!important;}
+.leaflet-tooltip{
+  background:var(--s2)!important;border:1px solid var(--b2)!important;
+  color:var(--text)!important;border-radius:8px!important;padding:0!important;
+  box-shadow:0 8px 32px rgba(0,0,0,.6)!important;
+}
+.leaflet-tooltip-top::before{border-top-color:var(--b2)!important;}
+.leaflet-control-zoom a{background:var(--s2)!important;color:var(--text)!important;border-color:var(--border)!important;}
+
+/* ── ANIMATIONS ── */
+@keyframes rise{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.animate{animation:rise .25s ease;}
+@keyframes kpipulse{0%{opacity:1}50%{opacity:.4;transform:scale(1.04)}100%{opacity:1}}
+.flash{animation:kpipulse .6s ease;}
+</style>
+</head>
+<body>
+
+<!-- TICKER -->
+<div id="ticker">
+  <div class="tick-label">💡 Live Insight</div>
+  <div id="tick-text">Loading India hiring intelligence…</div>
+</div>
+
+<!-- HEADER -->
+<div id="header">
+  <div class="logo">
+    <div class="logo-icon">🇮🇳</div>
+    <div><div class="logo-name">HireWatch India</div><div class="logo-sub">LIVE HIRING &amp; LAYOFF TRACKER</div></div>
+  </div>
+  <div id="answers">
+    <div class="ans" style="--ac:#10b981" onclick="focusAnswer('hiring')" title="Click to see hiring map">
+      <div class="ans-icon">🏆</div>
+      <div class="ans-body">
+        <div class="ans-q">Most Hiring City</div>
+        <div class="ans-city" id="a-h-city">—</div>
+        <div class="ans-val" id="a-h-val">—</div>
+      </div>
+    </div>
+    <div class="ans" style="--ac:#f43f5e" onclick="focusAnswer('layoffs')" title="Click to see layoff map">
+      <div class="ans-icon">🔴</div>
+      <div class="ans-body">
+        <div class="ans-q">Most Layoffs City</div>
+        <div class="ans-city" id="a-l-city">—</div>
+        <div class="ans-val" id="a-l-val">—</div>
+      </div>
+    </div>
+    <div class="ans" style="--ac:#3b82f6" onclick="focusAnswer('companies')" title="Click to see company density">
+      <div class="ans-icon">🏢</div>
+      <div class="ans-body">
+        <div class="ans-q">Most Companies</div>
+        <div class="ans-city" id="a-c-city">—</div>
+        <div class="ans-val" id="a-c-val">—</div>
+      </div>
+    </div>
+    <div class="ans" style="--ac:#8b5cf6" onclick="focusAnswer('growth')" title="Click to see growth map">
+      <div class="ans-icon">📈</div>
+      <div class="ans-body">
+        <div class="ans-q">Fastest Growing</div>
+        <div class="ans-city" id="a-g-city">—</div>
+        <div class="ans-val" id="a-g-val">—</div>
+      </div>
+    </div>
+  </div>
+  <div class="live-wrap">
+    <div class="dot"></div>
+    <div><strong>LIVE</strong> <span id="clock"></span></div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="map"></div>
+
+  <!-- PANEL -->
+  <div id="panel">
+    <!-- Mode bar -->
+    <div id="mode-bar">
+      <button class="mbt on" style="--mc:#10b981" onclick="setMode('hiring',this)">🟢 Hiring</button>
+      <button class="mbt"    style="--mc:#f43f5e" onclick="setMode('layoffs',this)">🔴 Layoffs</button>
+      <button class="mbt"    style="--mc:#3b82f6" onclick="setMode('companies',this)">🏢 Companies</button>
+      <button class="mbt"    style="--mc:#8b5cf6" onclick="setMode('growth',this)">📈 Growth</button>
+    </div>
+
+    <!-- Panel header -->
+    <div id="ph">
+      <div id="ph-title">Top Cities by Hiring</div>
+      <div id="ph-sub">Click any city to see companies</div>
+      <div id="ph-crumb" style="display:none"></div>
+    </div>
+
+    <!-- Search -->
+    <div id="psearch">
+      <input id="si" type="text" placeholder="🔍  Search city, district or company…" oninput="doSearch(this.value)"/>
+    </div>
+
+    <!-- Scrollable content -->
+    <div id="pc"></div>
+  </div>
+</div>
+
+<!-- SECTOR BAR -->
+<div id="sbar"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// DATA
+// ═══════════════════════════════════════════════════════════
+const DISTRICTS = [
+  {id:'bengaluru',    name:'Bengaluru',         state:'Karnataka',         lat:12.9716, lng:77.5946, hiring:2841, layoffs:234, companies:1123, growth:23, sector:'IT'},
+  {id:'mumbai',       name:'Mumbai',            state:'Maharashtra',       lat:19.0760, lng:72.8777, hiring:1823, layoffs:98,  companies:456,  growth:11, sector:'Finance/IT'},
+  {id:'hyderabad',    name:'Hyderabad',         state:'Telangana',         lat:17.3850, lng:78.4867, hiring:1678, layoffs:145, companies:756,  growth:19, sector:'IT'},
+  {id:'chennai',      name:'Chennai',           state:'Tamil Nadu',        lat:13.0827, lng:80.2707, hiring:1456, layoffs:89,  companies:567,  growth:9,  sector:'IT/Mfg'},
+  {id:'delhi',        name:'Delhi NCR',         state:'Delhi',             lat:28.7041, lng:77.1025, hiring:1234, layoffs:178, companies:789,  growth:13, sector:'IT/Finance'},
+  {id:'gurugram',     name:'Gurugram',          state:'Haryana',           lat:28.4595, lng:77.0266, hiring:987,  layoffs:200, companies:678,  growth:15, sector:'IT/Auto'},
+  {id:'pune',         name:'Pune',              state:'Maharashtra',       lat:18.5204, lng:73.8567, hiring:892,  layoffs:45,  companies:234,  growth:12, sector:'IT/Auto'},
+  {id:'ahmedabad',    name:'Ahmedabad',         state:'Gujarat',           lat:23.0225, lng:72.5714, hiring:745,  layoffs:89,  companies:423,  growth:11, sector:'Mfg/IT'},
+  {id:'kolkata',      name:'Kolkata',           state:'West Bengal',       lat:22.5726, lng:88.3639, hiring:678,  layoffs:123, companies:456,  growth:8,  sector:'Finance/Mfg'},
+  {id:'noida',        name:'Noida',             state:'Uttar Pradesh',     lat:28.5355, lng:77.3910, hiring:567,  layoffs:78,  companies:345,  growth:8,  sector:'IT'},
+  {id:'surat',        name:'Surat',             state:'Gujarat',           lat:21.1702, lng:72.8311, hiring:534,  layoffs:67,  companies:312,  growth:7,  sector:'Textiles/Mfg'},
+  {id:'coimbatore',   name:'Coimbatore',        state:'Tamil Nadu',        lat:11.0168, lng:76.9558, hiring:534,  layoffs:34,  companies:178,  growth:9,  sector:'Mfg/IT'},
+  {id:'kochi',        name:'Kochi',             state:'Kerala',            lat:9.9312,  lng:76.2673, hiring:345,  layoffs:41,  companies:189,  growth:6,  sector:'IT/Shipping'},
+  {id:'lucknow',      name:'Lucknow',           state:'Uttar Pradesh',     lat:26.8467, lng:80.9462, hiring:345,  layoffs:67,  companies:198,  growth:4,  sector:'Govt/IT'},
+  {id:'jaipur',       name:'Jaipur',            state:'Rajasthan',         lat:26.9124, lng:75.7873, hiring:456,  layoffs:89,  companies:312,  growth:6,  sector:'IT/Tourism'},
+  {id:'chandigarh',   name:'Chandigarh',        state:'Punjab',            lat:30.7333, lng:76.7794, hiring:312,  layoffs:56,  companies:198,  growth:5,  sector:'IT/Govt'},
+  {id:'visakhapatnam',name:'Visakhapatnam',     state:'Andhra Pradesh',    lat:17.6868, lng:83.2185, hiring:456,  layoffs:56,  companies:189,  growth:7,  sector:'IT/Shipyard'},
+  {id:'bhubaneswar',  name:'Bhubaneswar',       state:'Odisha',            lat:20.2961, lng:85.8245, hiring:287,  layoffs:78,  companies:189,  growth:5,  sector:'IT/Mining'},
+  {id:'nagpur',       name:'Nagpur',            state:'Maharashtra',       lat:21.1458, lng:79.0882, hiring:312,  layoffs:28,  companies:89,   growth:4,  sector:'Mfg'},
+  {id:'thiruvananthapuram', name:'Thiruvananthapuram', state:'Kerala',     lat:8.5241,  lng:76.9366, hiring:312,  layoffs:45,  companies:178,  growth:5,  sector:'IT/Govt'},
+];
+
+// Pre-rank all modes
+['hiring','layoffs','companies','growth'].forEach(m=>{
+  [...DISTRICTS].sort((a,b)=>b[m]-a[m]).forEach((d,i)=>{ d['r_'+m]=i+1; });
+});
+
+const COMPANIES = {
+  bengaluru:[
+    {name:'Infosys',         sector:'IT Services',    size:'250K emp', status:'hiring', val:3200, trend:'+18%', founded:1981},
+    {name:'Wipro',           sector:'IT Services',    size:'180K emp', status:'hiring', val:2100, trend:'+9%',  founded:1945},
+    {name:'Flipkart',        sector:'E-Commerce',     size:'30K emp',  status:'mixed',  val:450,  trend:'±',    founded:2007, layoffs:120},
+    {name:'Swiggy',          sector:'Food Tech',      size:'10K emp',  status:'mixed',  val:230,  trend:'↓',    founded:2014, layoffs:80},
+    {name:'Ola Cabs',        sector:'Transport Tech', size:'10K emp',  status:'layoff', val:340,  trend:'-22%', founded:2010},
+    {name:'Razorpay',        sector:'Fintech',        size:'5K emp',   status:'hiring', val:180,  trend:'+14%', founded:2014},
+    {name:'PhonePe',         sector:'Fintech',        size:'8K emp',   status:'hiring', val:250,  trend:'+21%', founded:2015},
+    {name:'CRED',            sector:'Fintech',        size:'2K emp',   status:'hiring', val:120,  trend:'+18%', founded:2018},
+    {name:'Meesho',          sector:'Social Comm.',   size:'4K emp',   status:'hiring', val:280,  trend:'+15%', founded:2015},
+    {name:'BYJU\'s',         sector:'EdTech',         size:'15K emp',  status:'layoff', val:560,  trend:'-34%', founded:2011},
+    {name:'Unacademy',       sector:'EdTech',         size:'3K emp',   status:'layoff', val:250,  trend:'-28%', founded:2015},
+    {name:'ShareChat',       sector:'Social Media',   size:'2K emp',   status:'layoff', val:150,  trend:'-18%', founded:2015},
+  ],
+  mumbai:[
+    {name:'Tata Consultancy Services', sector:'IT Services', size:'600K emp', status:'hiring', val:2400, trend:'+12%', founded:1968},
+    {name:'Reliance Jio',    sector:'Telecom',        size:'100K emp', status:'hiring', val:1800, trend:'+8%',  founded:2015},
+    {name:'HDFC Bank',       sector:'Banking',        size:'70K emp',  status:'hiring', val:1200, trend:'+15%', founded:1994},
+    {name:'ICICI Bank',      sector:'Banking',        size:'60K emp',  status:'hiring', val:890,  trend:'+11%', founded:1994},
+    {name:'Zomato',          sector:'Food Tech',      size:'12K emp',  status:'mixed',  val:320,  trend:'±',    founded:2008, layoffs:180},
+    {name:'Zepto',           sector:'Quick Commerce', size:'5K emp',   status:'hiring', val:450,  trend:'+34%', founded:2021},
+    {name:'Nykaa',           sector:'Beauty E-Comm',  size:'3K emp',   status:'hiring', val:320,  trend:'+12%', founded:2012},
+    {name:'WhiteHat Jr',     sector:'EdTech',         size:'1K emp',   status:'layoff', val:180,  trend:'-45%', founded:2018},
+  ],
+  hyderabad:[
+    {name:'Microsoft India', sector:'IT',             size:'15K emp',  status:'hiring', val:890,  trend:'+14%', founded:1990},
+    {name:'Google India',    sector:'IT',             size:'8K emp',   status:'hiring', val:456,  trend:'+10%', founded:2004},
+    {name:'Amazon India',    sector:'E-Commerce',     size:'70K emp',  status:'hiring', val:1200, trend:'+6%',  founded:1994, layoffs:120},
+    {name:'Cyient',          sector:'IT Services',    size:'14K emp',  status:'hiring', val:340,  trend:'+7%',  founded:1991},
+    {name:'BHEL',            sector:'Manufacturing',  size:'40K emp',  status:'layoff', val:230,  trend:'-8%',  founded:1964},
+    {name:'Apollo Hospitals',sector:'Healthcare',     size:'10K emp',  status:'hiring', val:890,  trend:'+20%', founded:1983},
+  ],
+  chennai:[
+    {name:'HCL Technologies',sector:'IT Services',    size:'220K emp', status:'hiring', val:1800, trend:'+11%', founded:1976},
+    {name:'TVS Motors',      sector:'Manufacturing',  size:'50K emp',  status:'hiring', val:450,  trend:'+7%',  founded:1978},
+    {name:'Zoho Corporation',sector:'IT Products',    size:'12K emp',  status:'hiring', val:890,  trend:'+22%', founded:1996},
+    {name:'Freshworks',      sector:'SaaS',           size:'5K emp',   status:'hiring', val:340,  trend:'+18%', founded:2010},
+    {name:'Ashok Leyland',   sector:'Manufacturing',  size:'20K emp',  status:'hiring', val:560,  trend:'+5%',  founded:1948},
+  ],
+  delhi:[
+    {name:'Paytm',           sector:'Fintech',        size:'8K emp',   status:'layoff', val:450,  trend:'-28%', founded:2010},
+    {name:'BYJU\'s (Delhi)', sector:'EdTech',         size:'5K emp',   status:'layoff', val:200,  trend:'-34%', founded:2011},
+    {name:'IndiGo Airlines', sector:'Aviation',       size:'30K emp',  status:'hiring', val:1200, trend:'+18%', founded:2006},
+    {name:'MakeMyTrip',      sector:'Travel Tech',    size:'4K emp',   status:'mixed',  val:230,  trend:'±',    founded:2000, layoffs:78},
+    {name:'Info Edge (Naukri)',sector:'Job Portal',   size:'5K emp',   status:'hiring', val:234,  trend:'+12%', founded:1995},
+  ],
+  gurugram:[
+    {name:'Hero MotoCorp',   sector:'Manufacturing',  size:'40K emp',  status:'hiring', val:780,  trend:'+6%',  founded:1984},
+    {name:'Maruti Suzuki',   sector:'Manufacturing',  size:'15K emp',  status:'hiring', val:650,  trend:'+4%',  founded:1981},
+    {name:'OYO Rooms',       sector:'Hospitality',    size:'10K emp',  status:'mixed',  val:320,  trend:'±',    founded:2013, layoffs:200},
+    {name:'Policybazaar',    sector:'Insurtech',      size:'9K emp',   status:'hiring', val:450,  trend:'+19%', founded:2008},
+    {name:'Urban Company',   sector:'Services',       size:'3K emp',   status:'layoff', val:120,  trend:'-15%', founded:2014},
+  ],
+  pune:[
+    {name:'Bajaj Auto',      sector:'Manufacturing',  size:'20K emp',  status:'hiring', val:560,  trend:'+5%',  founded:1945},
+    {name:'Tech Mahindra',   sector:'IT Services',    size:'160K emp', status:'hiring', val:1100, trend:'+8%',  founded:1986},
+    {name:'Cognizant',       sector:'IT Services',    size:'300K emp', status:'mixed',  val:780,  trend:'±',    founded:1994, layoffs:345},
+    {name:'Persistent Systems',sector:'IT',           size:'22K emp',  status:'hiring', val:680,  trend:'+16%', founded:1990},
+  ],
+  ahmedabad:[
+    {name:'Adani Group',     sector:'Infrastructure', size:'25K emp',  status:'hiring', val:1200, trend:'+14%', founded:1988},
+    {name:'Torrent Pharma',  sector:'Pharma',         size:'8K emp',   status:'hiring', val:456,  trend:'+9%',  founded:1959},
+    {name:'Arvind Limited',  sector:'Textiles',       size:'25K emp',  status:'hiring', val:345,  trend:'+3%',  founded:1931},
+  ],
+  kolkata:[
+    {name:'ITC Limited',     sector:'FMCG',           size:'30K emp',  status:'hiring', val:678,  trend:'+8%',  founded:1910},
+    {name:'Coal India',      sector:'Mining',         size:'250K emp', status:'mixed',  val:450,  trend:'±',    founded:1975, layoffs:120},
+    {name:'Wipro (Kolkata)', sector:'IT Services',    size:'180K emp', status:'hiring', val:345,  trend:'+5%',  founded:1945},
+  ],
+};
+function getCos(id){ return COMPANIES[id]||[{name:DISTRICTS.find(d=>d.id===id)?.name+' Companies',sector:'Various',size:'—',status:'hiring',val:50,trend:'+5%',founded:2010}]; }
+
+// ═══════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════
+const MODE_CFG = {
+  hiring:    { color:'#10b981', label:'Hiring',    unit:'open roles',   icon:'🟢', mcClass:'#10b981' },
+  layoffs:   { color:'#f43f5e', label:'Layoffs',   unit:'affected',     icon:'🔴', mcClass:'#f43f5e' },
+  companies: { color:'#3b82f6', label:'Companies', unit:'tracked',      icon:'🏢', mcClass:'#3b82f6' },
+  growth:    { color:'#8b5cf6', label:'Growth',    unit:'MoM',          icon:'📈', mcClass:'#8b5cf6' },
+};
+const INSIGHTS = [
+  '🔥 Bengaluru leads India with 2,841 active roles — 62% are IT/Tech positions',
+  '⚠️ Delhi NCR reports most layoffs in North India — Paytm alone accounts for 450',
+  '📈 Hyderabad is India\'s fastest growing tech hub at +19% month-over-month',
+  '🏆 IT sector is hiring 18% more than last month — 12,400 new openings nationally',
+  '🔴 EdTech sector down 34%: BYJU\'s and Unacademy account for 810 combined layoffs',
+  '🏢 Delhi NCR has the highest company density with 789 firms tracked',
+  '💡 Pune and Chennai show strong hiring with <5% layoff rate — healthiest markets',
+  '📍 Mumbai\'s finance sector adding 1,200+ banking roles — highest ever this quarter',
+];
+
+// ═══════════════════════════════════════════════════════════
+// MAP
+// ═══════════════════════════════════════════════════════════
+const map = L.map('map',{center:[20.5937,78.9629],zoom:5,attributionControl:false,zoomControl:true});
+L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',{maxZoom:19}).addTo(map);
+
+let markerLayer = L.layerGroup().addTo(map);
+let curMode = 'hiring';
+let curCity = null;
+
+function makeMarker(d, mode){
+  const cfg = MODE_CFG[mode];
+  const vals = DISTRICTS.map(x=>x[mode]);
+  const maxV = Math.max(...vals), minV = Math.min(...vals);
+  const t = maxV===minV ? .5 : (d[mode]-minV)/(maxV-minV);
+  const sz = Math.round(16 + t * 46); // 16-62px
+  const rank = d['r_'+mode];
+  const c = cfg.color;
+  const glow = rank<=3 ? `box-shadow:0 0 ${sz/2}px ${c}55;` : '';
+  const numColor = rank===1?'#fbbf24':rank===2?'#94a3b8':rank===3?'#c2845a':c;
+  const numStyle = `font-size:${Math.max(8,Math.round(sz*.3))}px;font-weight:900;color:${numColor};`;
+  const rankBadge = rank<=10 ? `<span style="${numStyle}">${rank}</span>` : '';
+
+  return L.marker([d.lat,d.lng],{
+    icon: L.divIcon({
+      className:'',
+      html:`<div style="width:${sz}px;height:${sz}px;background:${c}22;border:2px solid ${c}88;
+            border-radius:50%;display:flex;align-items:center;justify-content:center;
+            cursor:pointer;${glow}transition:all .2s;position:relative;">
+            ${rankBadge}
+            ${rank===1?`<div style="position:absolute;top:-8px;right:-6px;font-size:12px;">🔥</div>`:''}
+           </div>`,
+      iconSize:[sz,sz], iconAnchor:[sz/2,sz/2]
+    }),
+    zIndexOffset: rank===1 ? 1000 : 500-rank
+  })
+  .bindTooltip(tooltipHtml(d,mode),{permanent:false,direction:'top',opacity:1,className:''})
+  .on('click',()=>openCity(d.id));
+}
+
+function tooltipHtml(d, mode){
+  const cfg=MODE_CFG[mode];
+  const val = mode==='growth' ? `+${d[mode]}%` : d[mode].toLocaleString();
+  const rank = d['r_'+mode];
+  return `<div style="background:#0c1a30;border:1px solid rgba(255,255,255,.13);border-radius:10px;padding:10px 14px;min-width:180px;">
+    <div style="font-weight:800;font-size:13px;margin-bottom:4px;">${d.name}</div>
+    <div style="font-size:10px;color:#6b7a96;margin-bottom:8px;">${d.state} · ${d.sector}</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;">
+      <span style="font-size:11px;color:#94a3b8;">${cfg.icon} ${cfg.label}</span>
+      <span style="font-size:14px;font-weight:800;color:${cfg.color};">${val}</span>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.07);">
+      <span style="font-size:10px;color:#10b981;">▲ ${d.hiring.toLocaleString()}</span>
+      <span style="font-size:10px;color:#f43f5e;">▼ ${d.layoffs}</span>
+      <span style="font-size:10px;color:#3b82f6;">🏢 ${d.companies.toLocaleString()}</span>
+    </div>
+    <div style="font-size:9px;color:#4a5568;margin-top:4px;">Rank #${rank} nationally</div>
+  </div>`;
+}
+
+function buildMarkers(mode){
+  markerLayer.clearLayers();
+  DISTRICTS.forEach(d=>makeMarker(d,mode).addTo(markerLayer));
+}
+
+// ═══════════════════════════════════════════════════════════
+// PANEL RENDERING
+// ═══════════════════════════════════════════════════════════
+function renderRankings(mode, filter=''){
+  const cfg = MODE_CFG[mode];
+  document.getElementById('ph-title').textContent = `Top Cities by ${cfg.label}`;
+  document.getElementById('ph-sub').textContent = 'Click any city to see companies';
+  document.getElementById('ph-crumb').style.display='none';
+  document.getElementById('si').value = filter;
+
+  let list = filter
+    ? DISTRICTS.filter(d=>d.name.toLowerCase().includes(filter.toLowerCase())||d.state.toLowerCase().includes(filter.toLowerCase()))
+    : [...DISTRICTS].sort((a,b)=>b[mode]-a[mode]).slice(0,15);
+
+  const maxVal = Math.max(...list.map(d=>d[mode]));
+
+  const html = list.map((d,i)=>{
+    const rank = filter ? d['r_'+mode] : i+1;
+    const numClass = rank===1?'rk-1':rank===2?'rk-2':rank===3?'rk-3':'rk-n';
+    const val = mode==='growth' ? `+${d[mode]}%` : d[mode].toLocaleString();
+    const sub = mode==='growth' ? 'Month-on-month' : cfg.unit;
+    const barPct = maxVal ? Math.round((d[mode]/maxVal)*100) : 0;
+    const isOn = curCity===d.id;
+    return `<div class="rk-item${isOn?' on':''}" onclick="openCity('${d.id}')"
+              style="--mc:${cfg.color}">
+      <div class="rk-num ${numClass}">${rank}</div>
+      <div class="rk-body">
+        <div class="rk-name">${d.name}</div>
+        <div class="rk-state">${d.state}</div>
+        <div class="rk-bar" style="width:${barPct}%;background:${cfg.color};"></div>
+      </div>
+      <div class="rk-right">
+        <div class="rk-val" style="color:${cfg.color}">${val}</div>
+        <div class="rk-sub">${sub}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('pc').innerHTML = `<div class="animate">${html}</div>`;
+}
+
+function openCity(id){
+  curCity = id;
+  const d = DISTRICTS.find(x=>x.id===id);
+  if(!d) return;
+  map.flyTo([d.lat,d.lng],9,{duration:.8});
+
+  document.getElementById('ph-title').textContent = d.name;
+  document.getElementById('ph-sub').textContent = `${d.state} · ${d.sector}`;
+  const crumb = document.getElementById('ph-crumb');
+  crumb.style.display='block';
+  crumb.innerHTML = `<span class="crumb-link" onclick="goBack()">← All Cities</span>`;
+
+  const cos = getCos(id);
+  const hiCount = cos.filter(c=>c.status==='hiring').length;
+  const loCount = cos.filter(c=>c.status==='layoff').length;
+
+  const header = `
+    <div class="city-header">
+      <div class="city-h-name">${d.name}</div>
+      <div class="city-h-state">${d.state} · ${d.sector}</div>
+      <div class="city-stats">
+        <div class="cstat"><div class="cstat-v" style="color:var(--green)">${d.hiring.toLocaleString()}</div><div class="cstat-l">Hiring</div></div>
+        <div class="cstat"><div class="cstat-v" style="color:var(--red)">${d.layoffs}</div><div class="cstat-l">Layoffs</div></div>
+        <div class="cstat"><div class="cstat-v" style="color:var(--blue)">${d.companies.toLocaleString()}</div><div class="cstat-l">Companies</div></div>
+        <div class="cstat"><div class="cstat-v" style="color:var(--purple)">+${d.growth}%</div><div class="cstat-l">Growth</div></div>
+      </div>
+    </div>`;
+
+  // Sort: hiring first, then mixed, then layoffs
+  const order = {hiring:0,mixed:1,layoff:2};
+  const sorted = [...cos].sort((a,b)=>(order[a.status]||0)-(order[b.status]||0));
+
+  const coHtml = sorted.map(c=>{
+    const isH=c.status==='hiring', isL=c.status==='layoff', isM=c.status==='mixed';
+    const bc=isH?'badge-h':isL?'badge-l':'badge-m';
+    const bl=isH?'Hiring':isL?'Layoff':'Mixed';
+    const valColor=isH?'var(--green)':isL?'var(--red)':'var(--amber)';
+    const valText=isH?`+${c.val.toLocaleString()}`:isL?`-${c.val}`:
+      `+${c.val}/${c.layoffs||0}`;
+    const color = avatarColor(c.name);
+    const init = c.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    return `<div class="co-item">
+      <div class="co-avatar" style="background:${color}22;color:${color};">${init}</div>
+      <div class="co-body">
+        <div class="co-name">${c.name}</div>
+        <div class="co-meta">${c.sector} · ${c.size} · Est.${c.founded}</div>
+        <span class="badge ${bc}">${bl}</span>
+      </div>
+      <div class="co-right">
+        <div class="co-val" style="color:${valColor}">${valText}</div>
+        <div class="co-trend">${c.trend}</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('pc').innerHTML = `<div class="animate">${header}${coHtml}</div>`;
+  document.getElementById('si').value = '';
+}
+
+function goBack(){
+  curCity = null;
+  map.flyTo([20.5937,78.9629],5,{duration:.8});
+  renderRankings(curMode);
+}
+
+function avatarColor(name){
+  const palette=['#06b6d4','#8b5cf6','#10b981','#f59e0b','#3b82f6','#ec4899','#f43f5e','#84cc16'];
+  let h=0; for(let c of name) h=(h*31+c.charCodeAt(0))%palette.length;
+  return palette[h];
+}
+
+// ═══════════════════════════════════════════════════════════
+// MODE SWITCHING
+// ═══════════════════════════════════════════════════════════
+function setMode(mode, btn){
+  curMode = mode;
+  curCity = null;
+  document.querySelectorAll('.mbt').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  buildMarkers(mode);
+  renderRankings(mode);
+  document.getElementById('si').value='';
+}
+
+function focusAnswer(mode){
+  const btn = document.querySelector(`.mbt:nth-child(${['hiring','layoffs','companies','growth'].indexOf(mode)+1})`);
+  setMode(mode, btn);
+}
+
+// ═══════════════════════════════════════════════════════════
+// SEARCH
+// ═══════════════════════════════════════════════════════════
+function doSearch(q){
+  if(!q){ renderRankings(curMode); return; }
+  // Search districts
+  const dMatches = DISTRICTS.filter(d=>
+    d.name.toLowerCase().includes(q.toLowerCase())||
+    d.state.toLowerCase().includes(q.toLowerCase())
+  );
+  // Search companies
+  const coMatches = [];
+  Object.entries(COMPANIES).forEach(([cityId,cos])=>{
+    cos.forEach(c=>{
+      if(c.name.toLowerCase().includes(q.toLowerCase())){
+        const d=DISTRICTS.find(x=>x.id===cityId);
+        coMatches.push({...c, cityId, cityName:d?.name, state:d?.state});
+      }
+    });
+  });
+
+  if(!dMatches.length && !coMatches.length){
+    document.getElementById('pc').innerHTML=`<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px;">No results for "${q}"</div>`;
+    return;
+  }
+
+  let html='';
+  if(dMatches.length){
+    html+=`<div style="padding:8px 14px;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);">Cities (${dMatches.length})</div>`;
+    html+=dMatches.map(d=>{
+      const val=d[curMode]; const cfg=MODE_CFG[curMode];
+      const valStr=curMode==='growth'?`+${val}%`:val.toLocaleString();
+      return `<div class="rk-item" onclick="openCity('${d.id}')">
+        <div class="rk-num rk-n">${d['r_'+curMode]}</div>
+        <div class="rk-body"><div class="rk-name">${d.name}</div><div class="rk-state">${d.state}</div></div>
+        <div class="rk-right"><div class="rk-val" style="color:${cfg.color}">${valStr}</div><div class="rk-sub">${cfg.unit}</div></div>
+      </div>`;
+    }).join('');
+  }
+  if(coMatches.length){
+    html+=`<div style="padding:8px 14px;font-size:9px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;border-bottom:1px solid var(--border);margin-top:4px;">Companies (${coMatches.length})</div>`;
+    html+=coMatches.map(c=>{
+      const color=avatarColor(c.name);
+      const init=c.name.split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();
+      const isH=c.status==='hiring',isL=c.status==='layoff';
+      const bc=isH?'badge-h':isL?'badge-l':'badge-m';
+      const bl=isH?'Hiring':isL?'Layoff':'Mixed';
+      const valStr=isH?`+${c.val}`:isL?`-${c.val}`:`+${c.val}/-${c.layoffs||0}`;
+      return `<div class="co-item" onclick="openCity('${c.cityId}')">
+        <div class="co-avatar" style="background:${color}22;color:${color};">${init}</div>
+        <div class="co-body">
+          <div class="co-name">${c.name}</div>
+          <div class="co-meta">${c.cityName}, ${c.state}</div>
+          <span class="badge ${bc}">${bl}</span>
+        </div>
+        <div class="co-right"><div class="co-val">${valStr}</div><div class="co-trend">${c.trend}</div></div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('pc').innerHTML=`<div class="animate">${html}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// ANSWER CARDS (top bar)
+// ═══════════════════════════════════════════════════════════
+function updateAnswerCards(){
+  const sorted_h=[...DISTRICTS].sort((a,b)=>b.hiring-a.hiring)[0];
+  const sorted_l=[...DISTRICTS].sort((a,b)=>b.layoffs-a.layoffs)[0];
+  const sorted_c=[...DISTRICTS].sort((a,b)=>b.companies-a.companies)[0];
+  const sorted_g=[...DISTRICTS].sort((a,b)=>b.growth-a.growth)[0];
+  document.getElementById('a-h-city').textContent=sorted_h.name;
+  document.getElementById('a-h-val').textContent=`${sorted_h.hiring.toLocaleString()} open roles · ${sorted_h.state}`;
+  document.getElementById('a-l-city').textContent=sorted_l.name;
+  document.getElementById('a-l-val').textContent=`${sorted_l.layoffs} layoffs MTD · ${sorted_l.state}`;
+  document.getElementById('a-c-city').textContent=sorted_c.name;
+  document.getElementById('a-c-val').textContent=`${sorted_c.companies.toLocaleString()} companies · ${sorted_c.state}`;
+  document.getElementById('a-g-city').textContent=sorted_g.name;
+  document.getElementById('a-g-val').textContent=`+${sorted_g.growth}% MoM · ${sorted_g.state}`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// SECTOR BAR
+// ═══════════════════════════════════════════════════════════
+const SECTORS=[
+  {label:'IT/Tech',    hiring:12400, color:'#10b981'},
+  {label:'Finance',    hiring:4300,  color:'#3b82f6'},
+  {label:'Mfg',        hiring:5800,  color:'#f59e0b'},
+  {label:'E-Commerce', hiring:3200,  color:'#8b5cf6'},
+  {label:'Healthcare', hiring:1890,  color:'#ec4899'},
+  {label:'Aviation',   hiring:1200,  color:'#06b6d4'},
+  {label:'Fintech',    hiring:2100,  color:'#84cc16'},
+  {label:'EdTech',     hiring:-810,  color:'#f43f5e'},
+];
+function buildSectorBar(){
+  const pos=SECTORS.filter(s=>s.hiring>0);
+  const total=pos.reduce((a,b)=>a+b.hiring,0);
+  const layoffSec=SECTORS.filter(s=>s.hiring<0);
+  let html=pos.map(s=>{
+    const w=Math.round((s.hiring/total)*100);
+    return `<div class="sb-seg" style="flex:${w};background:${s.color}18;color:${s.color};border-right:1px solid var(--border);"
+              title="${s.label}: ${s.hiring.toLocaleString()} hiring">
+      ${w>6?s.label:''}
+    </div>`;
+  }).join('');
+  if(layoffSec.length){
+    html+=`<div class="sb-seg" style="flex:5;background:rgba(244,63,94,.15);color:#f43f5e;border-left:1px solid var(--border);"
+              title="EdTech: 810 layoffs">
+      EdTech▼</div>`;
+  }
+  document.getElementById('sbar').innerHTML=html;
+}
+
+// ═══════════════════════════════════════════════════════════
+// TICKER
+// ═══════════════════════════════════════════════════════════
+let tickIdx=0;
+function rotateTicker(){
+  const el=document.getElementById('tick-text');
+  el.classList.add('fade');
+  setTimeout(()=>{
+    tickIdx=(tickIdx+1)%INSIGHTS.length;
+    el.textContent=INSIGHTS[tickIdx];
+    el.classList.remove('fade');
+  },400);
+}
+
+// ═══════════════════════════════════════════════════════════
+// CLOCK & REAL-TIME SIM
+// ═══════════════════════════════════════════════════════════
+function updateClock(){
+  const n=new Date();
+  document.getElementById('clock').textContent=
+    `${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`;
+}
+
+function simTick(){
+  DISTRICTS.forEach(d=>{
+    d.hiring  = Math.max(0, d.hiring  + Math.floor(Math.random()*30-12));
+    d.layoffs = Math.max(0, d.layoffs + Math.floor(Math.random()*10-4));
+  });
+  // Re-rank
+  ['hiring','layoffs','companies','growth'].forEach(m=>{
+    [...DISTRICTS].sort((a,b)=>b[m]-a[m]).forEach((d,i)=>{ d['r_'+m]=i+1; });
+  });
+  updateAnswerCards();
+  buildMarkers(curMode);
+  if(!curCity) renderRankings(curMode);
+}
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+updateAnswerCards();
+buildMarkers('hiring');
+renderRankings('hiring');
+buildSectorBar();
+document.getElementById('tick-text').textContent = INSIGHTS[0];
+
+setInterval(updateClock, 1000);
+setInterval(rotateTicker, 5000);
+setInterval(simTick, 60000);   // syncs with hourly batch in production
+updateClock();
+</script>
+</body>
+</html>

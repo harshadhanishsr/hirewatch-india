@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.eggs/
+dist/
+build/
+venv/
+.venv/
+env/
+
+# Secrets — NEVER commit these
+.env
+.env.*
+CREDENTIALS.txt
+CREDENTIALS_PRIVATE.txt
+*PRIVATE*
+secrets.yml
+.secrets/
+*_credentials.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Large generated data (managed by pipeline, not git)
+# Only placeholder files are committed — pipeline overwrites them
+docs/data/companies_*.json

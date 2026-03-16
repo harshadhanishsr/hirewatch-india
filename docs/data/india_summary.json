@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-03-15",
-  "run_ts": "23107531085",
+  "updated_at": "2026-03-16",
+  "run_ts": "23133605574",
   "district_count": 10,
   "districts": [
     {
@@ -15,7 +15,7 @@
       "layoff_companies": 1,
       "avg_sentiment": 0.1,
       "growth_score": 0.0,
-      "updated_at": "2026-03-15"
+      "updated_at": "2026-03-16"
     },
     {
       "city": "Ahmedabad",
@@ -29,7 +29,7 @@
       "layoff_companies": 0,
       "avg_sentiment": 0.0,
       "growth_score": 0.0,
-      "updated_at": "2026-03-15"
+      "updated_at": "2026-03-16"
     },
     {
       "city": "Bengaluru",
@@ -43,7 +43,7 @@
       "layoff_companies": 0,
       "avg_sentiment": 0.0,
       "growth_score": 0.0,
-      "updated_at": "2026-03-15"
+      "updated_at": "2026-03-16"
     },
     {
       "city": "Chennai",
@@ -57,7 +57,7 @@
       "layoff_companies": 0,
       "avg_sentiment": 0.0,
       "growth_score": 0.0,
-      "updated_at": "2026-03-15"
+      "updated_at": "2026-03-16"
     },
     {
       "city": "Delhi",
@@ -71,7 +71,7 @@
       "layoff_companies": 0,
       "avg_sentiment": 0.0,
       "growth_score": 0.0,
-      "updated_at": "2026-03-15"
+      "updated_at": "2026-03-16"
     },
     {
       "city": "Gurugram",
@@ -85,7 +85,7 @@
       "layoff_companies": 0,
       "avg_sentiment": 0.0,
       "growth_score": 0.0,
-      "updated_at": "2026-03-15"
+      "updated_at": "2026-03-16"
     },
     {
       "city": "Hyderabad",
@@ -99,7 +99,7 @@
       "layoff_companies": 0,
       "avg_sentiment": 0.133,
       "growth_score": 0.0,
-      "updated_at": "2026-03-15"
+      "updated_at": "2026-03-16"
     },
     {
       "city": "Mumbai",
@@ -113,7 +113,7 @@
       "layoff_companies": 0,
       "avg_sentiment": 0.0,
       "growth_score": 0.0,
-      "updated_at": "2026-03-15"
+      "updated_at": "2026-03-16"
     },
     {
       "city": "Noida",
@@ -127,7 +127,7 @@
       "layoff_companies": 0,
       "avg_sentiment": 0.0,
       "growth_score": 0.0,
-      "updated_at": "2026-03-15"
+      "updated_at": "2026-03-16"
     },
     {
       "city": "Pune",
@@ -141,7 +141,7 @@
       "layoff_companies": 0,
       "avg_sentiment": 0.0,
       "growth_score": 0.0,
-      "updated_at": "2026-03-15"
+      "updated_at": "2026-03-16"
     }
   ]
 }
